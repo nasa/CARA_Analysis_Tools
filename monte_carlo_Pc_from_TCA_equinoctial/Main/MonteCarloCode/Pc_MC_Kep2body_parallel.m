@@ -47,14 +47,13 @@ function [Pc_all,Uc_all,Nc_tfc_all,Pc_att,Uc_att,Nc_tfc_att,Pc_0,Uc_0,Nc_0] = ..
 %
 % Examples/Validation Cases:
 %
-% Other m-files required: conj_bounds_Coppola.m
+% Other m-files required: None
+% Subfunctions: None
+% MAT-files required:     conj_bounds_Coppola.m
 %                         refine_bounded_extrema.m
 %                         Cart2Kep.m
 %                         convert_cartesian_to_equinoctial.m
 %                         jacobian_equinoctial_to_cartesian.m
-%                         plot_range.m
-% Subfunctions: None
-% MAT-files required:     None
 %
 % See also: None
 %
@@ -187,9 +186,8 @@ if ~isempty(v2)
     end
     [~,n,af,ag,chi,psi,lM,~] = convert_cartesian_to_equinoctial(r2/1000,v2/1000,fr); % Equinoctial elements at TCA
     mu2    = [n af ag chi psi lM fr]';
-    Jctoe1 = jacobian_equinoctial_to_cartesian(mu1,[r2; v2]'/1000,fr); % Jacobian going from equinoctial to cartesian
+    Jctoe1 = jacobian_equinoctial_to_cartesian(mu2,[r2; v2]'/1000,fr); % Jacobian going from equinoctial to cartesian
     Jctoe1 = inv(Jctoe1); % Jacobian going from cartesian to equinoctial
-
     P2 = Jctoe1 * (P2/1e6) * Jctoe1'; % Equinoctial covariance at TCA
     mu2    = mu2(1:6);
 else
@@ -243,8 +241,8 @@ Nc_tfc_all = zeros(Nbatch,Nbin);
 Nc_tfc_att = zeros(Nbatch,Nbin);
 Nc_0 = zeros(Nbatch,1);
 
-% parfor nb=1:Nbatch
-for nb=1:Nbatch
+parfor nb=1:Nbatch
+% for nb=1:Nbatch
     
     % Initialize "kep" structures, which will parameters for the primary
     % K2B solver.
@@ -462,7 +460,8 @@ else
     Uc_0 = sqrt(Nc_0)/Nsample_total;
 end
 
-Nc_all = Nc_0 + sum(Nc_tfc_all);
+% Nc_all = Nc_0 + sum(Nc_tfc_all);
+Nc_all = sum(Nc_tfc_all);
 if binofit_uncertainties
     [Pc_all,Uc_all] = binofit(Nc_all,Nsample_total,1-conf_level);
 else
@@ -470,7 +469,8 @@ else
     Uc_all = sqrt(Nc_all)/Nsample_total;
 end
 
-Nc_att = Nc_0 + sum(Nc_tfc_att);
+% Nc_att = Nc_0 + sum(Nc_tfc_att);
+Nc_att = sum(Nc_tfc_att);
 if binofit_uncertainties
     [Pc_att,Uc_att] = binofit(Nc_att,Nsample_total,1-conf_level);
 else
@@ -712,7 +712,11 @@ if plot_ca_distribution
     drawnow;
     
     fileroot = fullfile(plot_ca_dist_path,'CAdist');
-    saveas(hfig,[fileroot '.fig']);
+    try
+        saveas(hfig,[fileroot '.fig']);
+    catch
+        warning('Error Attempting to save .fig file, may be due to file size limitations')
+    end
     saveas(hfig,[fileroot '.png']);
     
     % Plot the position and velocity distributions
