@@ -14,6 +14,8 @@ This tool examines residual sets to determine whether their associated covarianc
 
 A method that may be employed as a method of determining the probability of collision is to perform a Monte Carlo simulation of both the primary and secondary object states at the time of close approach and statistically determine the probability of collision based on the number of trials which violate a predetermined proximity threshold. A Monte Carlo simulation is a computational technique that allows a probabilistic process to be modelled using random sampling from a known multivariate distribution. As the process of orbit determination yields both a best estimate of a satellite state and its associated uncertainty, the problem of collision probability lends itself well to using Monte Carlo sampling methodology.
 
+> **Note:** The Monte Carlo Pc algorithm will take a long time to run. This functionality will be replaced with our Simple Dynamics Monte Carlo algorithm in a future release.
+
 ## OD Quality Assessment
 
 The Orbit Determination Quality Assessment (ODQA) algorithm is intended to analyze an input Conjunction Data Message (CDM) and assess whether the controls and inputs used in the orbit determination process are sufficient to have general confidence in output data products, or if these inputs require further review.
