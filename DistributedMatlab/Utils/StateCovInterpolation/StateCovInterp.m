@@ -38,8 +38,6 @@ function [r,v,P] = StateCovInterp(T, time, Pos, Vel, Cov)
 % MAT-files required: None
 % See also: None
 %
-% Initial Version:  March   2020
-% Latest Version:   Mar     2023
 % ----------------- BEGIN CODE -----------------
 
 %% Check for sufficient input
@@ -63,25 +61,29 @@ if ~isequal(size(Pos), [5 3]) || ...
     error('Incorrect Pos or Vel input variable dimensions');
 end
 
-% Ensure correct cov array dimensions
+% Check for empty covariance, meaning no covariance interpolation is
+% required
 if Nargin == 4
     Cov = [];
-elseif Nargin == 5 && ~isequal(size(Cov), [6 6 5])
+end
+isemptyCov = isempty(Cov);
+
+% Check for correct non-empty covariance array dimensions
+if ~isemptyCov && ~isequal(size(Cov), [6 6 5])
     error('Incorrect Cov input variable dimensions');
 end
 
-% Check for empty covariance, meaning no covariance interpolation is
-% required
-isemptyCov = isempty(Cov);
-
 % Check if input Covarainces 3X3 or Off-Diagonals=0
 if isemptyCov
-    UseLagrange = false;
+    UseLagrangeCovInterpolation = false;
 else
-    if max(size(Cov(:,:,1)))<6 || sum(sum(Cov(1:3,4:6,1)))==0
-        UseLagrange = true;
+    if sum(sum(Cov(4:6,4:6,1))) == 0
+        % Zero veolcity covariances require Lagrange cov. interpolation
+        UseLagrangeCovInterpolation = true;
     else
-        UseLagrange = false;
+        % Non-zero veolcity covariances allow two-body state transition
+        % matrix (TBSTM) method of cov. interpolation
+        UseLagrangeCovInterpolation = false;
     end
 end
 
@@ -115,11 +117,11 @@ if T < time(1) || T > time(5)
     return;
 end
 
-if UseLagrange
+if UseLagrangeCovInterpolation
     
     warning('Covariance Nodes presented are insufficiently populated for 2-Body Interpolation (required 6X6 fully populated covariance), covariance interpolation will be done using Lagrangian methods (may result in NPD covariances)')
     % Interpolate pos/vel/Cov state using 5-point Lagrange method
-    [r,v,P] = LagrangeInterp(T, time, Pos, Vel);
+    [r,v,P] = LagrangeInterp(T, time, Pos, Vel, Cov);
     
 else
     
@@ -134,7 +136,8 @@ else
     end
     
     % Find the two ephemeris times that bracket time T
-    i = max(find(dt > 0));
+    % i = max(find(dt > 0));
+    i = find(dt > 0,1,'last');
     if isempty(i) || (i == 5)
         error('Failed to find bracketing times');
     end
@@ -170,5 +173,10 @@ end
 % D. Hall        | 2020-MAR-31 | Initial Development
 % T. Lechtenberg | 2022-Jan-06 | Addition of Catch for 3X3 Covariances to
 %                                use lagrange interpolation
-% D. Hall        | Fixed bug handling empty covariances, which implies no
-%                  covariance interpolation is required
+% D. Hall        | 2024-Jan-29 | Fixed bug handling empty covariances,
+%                                which implies no covariance interpolation
+%                                is required. Also fixed bug in the
+%                                "UseLagrangeCovInterpolation" branch,
+%                                which did not have "Cov" in the input
+%                                parameter list to the "LagrangeInterp"
+%                                function.

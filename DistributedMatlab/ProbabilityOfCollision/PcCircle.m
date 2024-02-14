@@ -211,6 +211,11 @@ function [Pc,out] = PcCircle(r1,v1,cov1,r2,v2,cov2,HBR,params)
         params.WarningLevel = 0;
     end
     WarningLevel = params.WarningLevel;
+    % Default primary/secondary covariance processing (enables plotting of
+    % primary and secondary ellipses on CA distribution plots)
+    if ~isfield(params,'PriSecCovProcessing') || isempty(params.PriSecCovProcessing)
+        params.PriSecCovProcessing = false;
+    end
     
     % Check for a valid and sensible EstimationMode
     if EstimationMode <= 0
@@ -300,6 +305,37 @@ function [Pc,out] = PcCircle(r1,v1,cov1,r2,v2,cov2,HBR,params)
     x = cross(y,z,2);
     eci2xyz = [x y z];
     out.xhat = x; out.yhat = y; out.zhat = z;    
+    
+    % Pri and Sec cov processing
+    if params.PriSecCovProcessing
+        
+        % Project combined covariances into conjunction planes
+        RotatedCov = Product3x3(eci2xyz,Product3x3(cov1(:,1:1:9),eci2xyz(:,[1 4 7 2 5 8 3 6 9])));
+        Amat = RotatedCov(:,[1 3 9]);
+        out.AmatPri = Amat;
+        if max(abs(Amat(:))) == 0
+            warning('All zero primary covariance being processed');
+        end
+        % Calculate eigenvalues and eigenvectors for each covariance matrix,
+        % 2nd eigenvector isn't needed for the rest of the calculation
+        [V1, V2, L1, L2] = eig2x2(Amat);
+        out.EigV1Pri = V1; out.EigL1Pri = L1;
+        out.EigV2Pri = V2; out.EigL2Pri = L2;
+    
+        % Project combined covariances into conjunction planes
+        RotatedCov = Product3x3(eci2xyz,Product3x3(cov2(:,1:1:9),eci2xyz(:,[1 4 7 2 5 8 3 6 9])));
+        Amat = RotatedCov(:,[1 3 9]);
+        if max(abs(Amat(:))) == 0
+            warning('All zero secondary covariance being processed');
+        end
+        out.AmatSec = Amat;
+        % Calculate eigenvalues and eigenvectors for each covariance matrix,
+        % 2nd eigenvector isn't needed for the rest of the calculation
+        [V1, V2, L1, L2] = eig2x2(Amat);
+        out.EigV1Sec = V1; out.EigL1Sec = L1;
+        out.EigV2Sec = V2; out.EigL2Sec = L2;
+        
+    end
     
     % Project combined covariances into conjunction planes
     RotatedCov = Product3x3(eci2xyz,Product3x3(CombCov(:,1:1:9),eci2xyz(:,[1 4 7 2 5 8 3 6 9])));
@@ -544,6 +580,10 @@ end
 %                                match standardized structures for Pc
 %                                calls. Vectorized the zero miss distance
 %                                and zero relative velocity calculations.
+% D. Hall        | 02-07-2024 |  Added "PriSecCovProcessing" flag, to
+%                                calculate eigendecompositions of primary
+%                                and secondary conjunction plane
+%                                covariances (optional, default = false)
 
 % =========================================================================
 %

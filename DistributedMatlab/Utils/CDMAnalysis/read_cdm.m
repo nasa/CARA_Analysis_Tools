@@ -69,6 +69,7 @@ function [cdmhead, cdmobj, status] = read_cdm(filename, ignoreExtraFields, ignor
 %                           is defined. Added the capability to move some
 %                           fields from header to objects and vice-versa in
 %                           order to fix some poorly formatted CDMs.
+% L. Baars      02/14/2024  Added support for EFFECTIVE_HBR comment field.
 
 persistent pathsAdded
 if isempty(pathsAdded)
@@ -344,6 +345,9 @@ for ii = 1:NidxComment
         'HBR ');
     data{i} = strrep(data{i}, ...
         'COMMENT HBR', ...
+        'HBR ');
+    data{i} = strrep(data{i}, ...
+        'COMMENT EFFECTIVE_HBR', ...
         'HBR ');
     % Screened with special processing, with and without the '=' sign
     screenedWithComment = 'COMMENT Screened with';
