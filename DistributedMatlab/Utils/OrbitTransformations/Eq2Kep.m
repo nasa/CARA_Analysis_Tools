@@ -46,7 +46,7 @@ function [KEP] = Eq2Kep(EQ)
 %
 % =========================================================================
 %
-% Initial version: Mar 2013;  Latest update: Jun 2023
+% Initial version: Mar 2013;  Latest update: Mar 2024
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -69,7 +69,7 @@ function [KEP] = Eq2Kep(EQ)
     mu = 3.986004418e5;
 
     % Semi-Major axis
-    a = (mu./n.^2).^(1/3);
+    a = nthroot(mu./n.^2,3);
     
     % Eccentricity
     e = sqrt(f.^2+g.^2);
@@ -123,6 +123,8 @@ return
 % E. White       | 06-30-2023 | Updated documentation, removed unused
 %                               commented-out code, added check for
 %                               parabolic and rectilinear orbits
+% L. Baars       | 03-05-2024 | Modified fractional exponent to use more
+%                               stable nthroot() function.
 
 % =========================================================================
 %

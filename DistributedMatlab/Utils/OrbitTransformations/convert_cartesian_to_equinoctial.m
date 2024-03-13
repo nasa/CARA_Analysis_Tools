@@ -110,6 +110,15 @@ n = sqrt(mu/a^3);
 
 evec = (1/mu) * ( (v2-mu/r)*rvec - rdv*vvec );
 
+% Issue warning and return for unbound orbits with ecc^2 >= 1
+if evec'*evec >= 1
+    if issue_warnings
+        warning('convert_cartesian_to_equinoctial:UnboundOrbit', 'Cannot process unbound orbit with ecc^2 = evec.evec >= 1');
+    end
+    n=[]; af=[]; ag=[]; chi=[]; psi=[]; lM=[]; F=[];
+    return;
+end
+
 % Calculate chi and psi elements
 what = rcv/sqrt(rcv(1)^2 + rcv(2)^2 + rcv(3)^2);
 
@@ -136,7 +145,16 @@ ghat = [ 2*fr*chi*psi ; (1+chi2-psi2)*fr ; 2*psi     ] / C;
 af = fhat(1) * evec(1) + fhat(2) * evec(2) + fhat(3) * evec(3);
 ag = ghat(1) * evec(1) + ghat(2) * evec(2) + ghat(3) * evec(3);
 
-af2 = af^2; ag2 = ag^2;
+af2 = af^2; ag2 = ag^2; ec2 = ag2+af2;
+
+% Issue warning and return for unbound orbits with ecc^2 >= 1
+if ec2 >= 1
+    if issue_warnings
+        warning('convert_cartesian_to_equinoctial:UnboundOrbit', 'Cannot process unbound orbit with ecc^2 = af^2 + ag^2 >= 1');
+    end
+    n=[]; af=[]; ag=[]; chi=[]; psi=[]; lM=[]; F=[];
+    return;
+end
 
 X = fhat(1) * rvec(1) + fhat(2) * rvec(2) + fhat(3) * rvec(3);
 Y = ghat(1) * rvec(1) + ghat(2) * rvec(2) + ghat(3) * rvec(3);
@@ -171,7 +189,11 @@ end
 %                               validation, improved check for unbound
 %                               orbits, improved speed in various
 %                               locations, added warning for retrograde
-%                               orbits without flag 
+%                               orbits without flag
+% D. Hall        | 02-27-2024 | Added processing to catch unbound orbits
+%                               with ecc >= 1, and prevent errors for
+%                               orbits with e^2 values within round-off
+%                               error of 1.
 
 % =========================================================================
 %

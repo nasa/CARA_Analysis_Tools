@@ -114,7 +114,7 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
     end
     Lclip = (HBR*params.Fclip)^2;
     
-    if ~isfield(params,'GM'); params.GM = []; end;
+    if ~isfield(params,'GM'); params.GM = []; end
     if isempty(params.GM)
         % Earth gravitational constant mu = GM (EGM-96) [km^3/s^2]
         params.GM = 3.986004418e5;
@@ -305,9 +305,6 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
             % if EnMx > 0
             %     keyboard;
             % end
-
-            
-            
             
             
             % Mark as unconverged if an unbound orbit was
@@ -315,10 +312,11 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
 
             if (Energy1 >= 0) || (Energy2 >= 0)
 
-                % Convergence failure due to unbound primary or secondary orbit
+                % Convergence failure due to unbound primary or
+                % secondary orbit
                 iterating = false;
                 converged = false;
-                failure = 10*(Energy1 >= 0)+(Energy2 >= 0);
+                failure = 10*(Energy1 >= 0)+(Energy2 >= 0); % 11, 10, or 01
 
             else
                 
@@ -416,48 +414,83 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
                     convert_cartesian_to_equinoctial(xs1(1:3),xs1(4:6),[],[],verbose);
                 [a2s,n2s,af2s,ag2s,chi2s,psi2s,lM2s] = ...
                     convert_cartesian_to_equinoctial(xs2(1:3),xs2(4:6),[],[],verbose);
-
-                % Mark as unconverged if an unbound orbit was
-                % encountered during the iteration process
-
-                if (a1s <= 0) || (a2s <= 0)
-
-                    % Convergence failure due to unbound primary or secondary orbit
+                
+                % Check if any equnoctial orbital elements of the
+                % primary and secondary POP states are bad,
+                % indicating an unconverged orbit
+                if isempty(n1s) || isnan(a1s)
+                    bad1s = true;
+                else
+                    bad1s = false;
+                end
+                if isempty(n2s) || isnan(a2s)
+                    bad2s = true;
+                else
+                    bad2s = false;
+                end
+                
+                % Check for failures due to unconverged or
+                % unbound equinoctial orbit(s)
+                if bad1s || bad2s
+                    
+                    % Convergence failure due to unconverged equinoctial
+                    % orbit(s)
                     iterating = false;
                     converged = false;
-                    failure = 10*(a1s <= 0)+(a2s <= 0);
-
+                    failure = 1e3*bad1s + 1e2*bad2s; % 1100, 1000, or 0100
+                    
                 else
+                    
+                    % Check for unbound orbits
+                    esq1s = af1s^2+ag1s^2;
+                    unbound1s = (a1s <= 0) | esq1s >= 1;
+                    esq2s = af2s^2+ag2s^2;
+                    unbound2s = (a2s <= 0) | esq2s >= 1;
 
-                    % Epoch mean longitudes at the initial times
-                    lM10s = mod(lM1s-n1s*dt01,twopi);
-                    lM20s = mod(lM2s-n2s*dt02,twopi);
+                    if unbound1s || unbound2s
 
-                    % Epoch equinoctial states and associated Jacobians, as
-                    % required for the next iteration or for aux output
-                    Es01 = [n1s;af1s;ag1s;chi1s;psi1s;lM10s];
-                    Es02 = [n2s;af2s;ag2s;chi2s;psi2s;lM20s];
-                    Js1 = jacobian_E0_to_Xt(dt01,Es01);
-                    Js2 = jacobian_E0_to_Xt(dt02,Es02);
+                        % Convergence failure due to a <= 0 unbound orbit
+                        iterating = false;
+                        converged = false;
+                        failure = 10*unbound1s + unbound2s; % 11, 10, or 01
 
-                    if params.verbose
-                        disp([' Es01 = ' num2str(Es01')]);
-                        disp([' Es02 = ' num2str(Es02')]);
+                    else
+
+                        % Epoch mean longitudes of the POP states at the
+                        % initial times
+                        lM10s = mod(lM1s-n1s*dt01,twopi);
+                        lM20s = mod(lM2s-n2s*dt02,twopi);
+                        
+                        % Epoch equinoctial states and associated Jacobians
+                        % as required for the next iteration or for aux output
+                        Es01 = [n1s;af1s;ag1s;chi1s;psi1s;lM10s];
+                        Es02 = [n2s;af2s;ag2s;chi2s;psi2s;lM20s];
+
+                        if params.verbose
+                            disp([' Es01 = ' num2str(Es01')]);
+                            disp([' Es02 = ' num2str(Es02')]);
+                        end
+
+                        % Epoch equinoctial Jacobians for the POP states
+                        % as required for the next iteration, or for the
+                        % aux. output
+                        Js1 = jacobian_E0_to_Xt(dt01,Es01);
+                        Js2 = jacobian_E0_to_Xt(dt02,Es02);
+
+                        % Save results from this iteration to use in the next
+                        if iterating
+                            % Comparison variables
+                            mup_old2 = mup_old;
+                            mup_old  = mup;
+                            vu1p_old = vu1p;
+                            vu2p_old = vu2p;
+                            % MD2_old  = MD2;
+                            % Increment iteration counter
+                            iteration = iteration+1;
+                        end
+
                     end
-
-                    % Save results from this iteration to use in the next
-
-                    if iterating
-                        % Comparison variables
-                        mup_old2 = mup_old;
-                        mup_old  = mup;
-                        vu1p_old = vu1p;
-                        vu2p_old = vu2p;
-                        % MD2_old  = MD2;
-                        % Increment iteration counter
-                        iteration = iteration+1;
-                    end
-
+                    
                 end
                 
             end
@@ -538,3 +571,11 @@ end
 % D.Hall         | 2020-JAN-10 | Initial Development
 % D.Hall         | 2020-JUN-16 | Modified to allow maxiter = 1 to calculate
 %                                the original Coppola (2012) formulation.
+% D. Hall        | 2024-FEB-27 | Added non-convergence for peak overlap
+%                                point (POP) failure flags of 1100, 1000 or
+%                                0100, indicating that an undefined
+%                                equnioctial orbit was encountered during
+%                                the POP calculation process. Also, 
+%                                expanded non-convergence for POP primary
+%                                or secondary eccentricities >= 1, another
+%                                of indicating unbound POP state orbits.

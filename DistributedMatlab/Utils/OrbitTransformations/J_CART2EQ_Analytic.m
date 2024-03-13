@@ -46,7 +46,7 @@ function [J] = J_CART2EQ_Analytic(State)
     % Jacobian matrix between Keplerian and Equinoctial elements
     % (Matrix od partial derivatives, dKEP/dEQ)
     J_KEP_EQ      = zeros(6,6);
-    J_KEP_EQ(1,4) = (-2/(3*n))*(mu/n^2)^(1/3);
+    J_KEP_EQ(1,4) = (-2/(3*n))*nthroot(mu/n^2,3);
     J_KEP_EQ(2,1) = Af / sqrt(Af^2 + Ag^2);
     J_KEP_EQ(2,2) = Ag / sqrt(Af^2 + Ag^2);
     J_KEP_EQ(3,5) = 2*fr*chi / ((1 + chi^2 + psi^2)*sqrt(chi^2 + psi^2));

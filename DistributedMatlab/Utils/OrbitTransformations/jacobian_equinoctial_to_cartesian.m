@@ -65,7 +65,7 @@ r2 = rvec'*rvec; r = sqrt(r2); r3 = r2*r;
 
 % Aux quantities
 
-n2 = n^2; a3 = mu/n2; a = a3^(1/3); A = n*a^2;
+n2 = n^2; a3 = mu/n2; a = nthroot(a3,3); A = n*a^2;
 
 ag2 = ag^2; af2 = af^2; B = sqrt(1-ag2-af2); % b = 1/(1+B);
 

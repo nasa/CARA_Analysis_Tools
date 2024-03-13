@@ -54,7 +54,7 @@ function [rvec,vvec,X,Y,Xdot,Ydot,F,cF,sF] = ...
 %
 % =========================================================================
 %
-% Initial version: Dec 2019;  Latest update: Jun 2023
+% Initial version: Dec 2019;  Latest update: Mar 2024
 %
 % ----------------- BEGIN CODE -----------------                        
 
@@ -93,7 +93,7 @@ end
 
 n2 = n.^2;
 a3 = mu./n2;
-a = a3.^(1/3);
+a = nthroot(a3,3);
 na = n.*a;
 
 % Mean longitudes
@@ -277,6 +277,8 @@ end
 %                               Kepler's equation
 % D. Hall        | 04-12-2022 | Formatted and reorganized code
 % E. White       | 06-30-2023 | Added compliant documentation
+% L. Baars       | 03-05-2024 | Modified fractional exponent to use more
+%                               stable nthroot() function.
 
 % =========================================================================
 %

@@ -284,7 +284,7 @@ function [Pc, out] = Pc3D_Hall(r1,v1,C1,r2,v2,C2,HBR,params)
 %
 % =========================================================================
 %
-% Initial version: Jan 2020;  Latest update: Aug 2023
+% Initial version: Jan 2020;  Latest update: Mar 2024
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -878,7 +878,7 @@ while still_refining
                 % submatrices, and calculate related quantities
                 As = Ps(1:3,1:3); Bs = Ps(4:6,1:3); Cs = Ps(4:6,4:6);
                 [~,~,~,~,~,Asdet,Asinv] = CovRemEigValClip(As,Lclip);
-                Ns0 = (twopicubed*Asdet)^(-0.5);
+                Ns0 = nthroot(twopicubed*Asdet,-2);
                 bs = Bs*Asinv; Csp = Cs-bs*Bs'; 
                 
                 % Store xu and Ps for output
@@ -1368,8 +1368,14 @@ else
     % Some POP estimtes converged and some did not
     % Find the maximum Ncdot value
     Ncdotmax = max(out.Ncdot);
-    % Check if the maximum Ncdot is finite for convergence evaluation    
+    % Check for other convergence conditions
     if isinf(Ncdotmax)
+        % Check if the maximum Ncdot is finite for convergence evaluation    
+        out.converged = false;
+        out.Ncdotcut = NaN;
+    elseif any(out.POPfail >= 100)
+        % Not converged because an undefined equinoctial orbit was
+        % encountered
         out.converged = false;
         out.Ncdotcut = NaN;
     else
@@ -1957,7 +1963,6 @@ out.MS2eff = cat(2,out.MS2eff,NaNnew);
 out.POPconv = cat(2,out.POPconv,false(Snew));
 out.POPiter = cat(2,out.POPiter,NaNnew);
 out.POPfail = cat(2,out.POPfail,NaNnew);
-out.POPfail = cat(2,out.POPfail,NaNnew);
 NaNvec = NaN(size(X1new));
 NaNmat = NaN(size(J1new));
 out.xs1 = cat(2,out.xs1,NaNvec);
@@ -2035,10 +2040,17 @@ end
 %                                3D-Pc calculated values after double
 %                                checking the outputs against original
 %                                baseline.
-% L. Baars       | 02-27-2023 |  Fixed relative pathing issue in addpath
+% L. Baars       | 02-27-2023  | Fixed relative pathing issue in addpath
 %                                calls.
 % D. Hall        | 07-27-2023  | Added retrograde orbit processing
-% E. White       | 08-07-2023 |  Added compliant documentation
+% E. White       | 08-07-2023  | Added compliant documentation
+% D. Hall        | 02-22-2024  | Added non-convergence for peak overlap
+%                                point (POP) failure flags of 100 or
+%                                greater, indicating that an undefined
+%                                equnioctial orbit was encountered during
+%                                the POP calculation process.
+% L. Baars       | 03-05-2024  | Modified fractional exponent to use more
+%                                stable nthroot() function.
 
 % =========================================================================
 %
