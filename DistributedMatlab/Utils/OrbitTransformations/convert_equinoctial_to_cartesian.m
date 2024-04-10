@@ -181,7 +181,7 @@ end
 
 % if ecc2 < 0.81 % Corresponds to ecc < 0.9 (used for testing)
     
-    % Use iterative algorithm of Valado and Alfano (2015) equation 10 
+    % Use iterative algorithm of Vallado and Alfano (2015) equation 10 
     % to find eccentric longitude F
 
     F = lam; cF = cos(F); sF = sin(F);
@@ -234,8 +234,7 @@ if ~converged
     KEP = @(FF) abs(FF + ag*cos(FF) - af*sin(FF) - lam);
 
     % Solve Kepler's equation using Matlab's fminbnd function
-    options = optimset('fminbnd');
-    options = optimset(options,'TolX',Ftol,'MaxIter',max(maxiter,500));
+    options = SetOptimsetOptions(Ftol, maxiter);
     [F0,~,exitflag] = fminbnd(KEP,0,2*pi,options);
     
     % Check for convergence
@@ -263,6 +262,20 @@ end
 return
 end
 
+% This function is used so that options only have to be set once when Ftol
+% and maxiter don't change
+function [outOptions] = SetOptimsetOptions(Ftol, maxiter)
+    persistent FtolSaved maxiterSaved options
+    if isempty(options) || isempty(FtolSaved) || isempty(maxiterSaved) || ...
+            Ftol ~= FtolSaved || maxiter ~= maxiterSaved
+        FtolSaved = Ftol;
+        maxiterSaved = maxiter;
+        options = optimset('fminbnd');
+        options = optimset(options,'TolX',Ftol,'MaxIter',max(maxiter,500));
+    end
+    outOptions = options;
+end
+
 % ----------------- END OF CODE -----------------
 %
 % Please record any changes to the software in the change history 
@@ -279,6 +292,9 @@ end
 % E. White       | 06-30-2023 | Added compliant documentation
 % L. Baars       | 03-05-2024 | Modified fractional exponent to use more
 %                               stable nthroot() function.
+% L. Baars       | 03-27-2024 | Moved setting of fminbnd options into
+%                               subfunction with persistent variables in
+%                               order to speed up processing.
 
 % =========================================================================
 %

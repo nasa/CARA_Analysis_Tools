@@ -12,6 +12,12 @@ function J = jacobian_equinoctial_to_cartesian(E,X,fr,mu)
 %
 % =========================================================================
 %
+% Copyright (c) 2024 United States Government as represented by the
+% Administrator of the National Aeronautics and Space Administration.
+% All Rights Reserved.
+%
+% =========================================================================
+%
 % INPUT:
 %
 % E = (n,af,ag,chi,psi,lM)' = Equinoctial state vector (km) [6x1]
@@ -31,9 +37,14 @@ function J = jacobian_equinoctial_to_cartesian(E,X,fr,mu)
 %
 % REFERENCE:
 %
-% Vallado and Alfano (2015), AAS 15-537
+% Vallado and Alfano, "Updated Analytical Partials for Covariance
+%     Transformations and Optimization, 2015, AAS 15-537
 %
 % =========================================================================
+%
+% Initial version: Dec 2019;  Latest update: Mar 2024
+%
+% ----------------- BEGIN CODE -----------------
 
 % Defaults and intializations
 
@@ -59,7 +70,6 @@ X = reshape(X,6,1);
 n = E(1); af = E(2); ag = E(3); chi = E(4); psi = E(5); % lM = E(6);
 
 rvec = X(1:3); vvec = X(4:6);
-% rx = X(1); ry = X(2); rz = X(3); vx = X(4); vy = X(5); vz = X(6);
 
 r2 = rvec'*rvec; r = sqrt(r2); r3 = r2*r;
 
@@ -77,8 +87,6 @@ fhat = [ 1-chi2+psi2  ; 2*chi*psi        ; -2*fr*chi        ] / C;
 ghat = [ 2*fr*chi*psi ; (1+chi2-psi2)*fr ; 2*psi            ] / C;
 what = [ 2*chi        ; -2*psi           ; (1-chi2-psi2)*fr ] / C;
 
-% [fhat ghat what]
-
 % X, Y, Xdot, and Ydot
 
 X = fhat' * rvec;
@@ -86,8 +94,6 @@ Y = ghat' * rvec;
 
 Xd = fhat' * vvec;
 Yd = ghat' * vvec;
-
-% [X Y Xd Yd]
 
 % Partials of X, Y, Xdot, Ydot
 
@@ -110,12 +116,6 @@ J = NaN(6,6);
 % drvec/dn & dvvec/dn
 cv = 1/(3*n);
 cr = -2*cv;
-% J(1,1) = cr*rx;
-% J(2,1) = cr*ry;
-% J(3,1) = cr*rz;
-% J(4,1) = cv*vx;
-% J(5,1) = cv*vy;
-% J(6,1) = cv*vz;
 J(1:3,1) = cr*rvec;
 J(4:6,1) = cv*vvec;
 
@@ -142,3 +142,26 @@ J(4:6,6) = (-n*a3/r3)*rvec ;
 
 return
 end
+
+% ----------------- END OF CODE -----------------
+%
+% Please record any changes to the software in the change history 
+% shown below:
+%
+% ----------------- CHANGE HISTORY ------------------
+% Developer      |    Date    |     Description
+% ---------------------------------------------------
+% T. Lechtenberg | 12-13-2019 | Initial development
+% L. Baars       | 03-05-2024 | Modified fractional exponent to use more
+%                               stable nthroot() function.
+% L. Baars       | 03-27-2024 | Modified header/footer to standard
+%                               documentation and made some minor comment
+%                               changes.
+
+% =========================================================================
+%
+% Copyright (c) 2024 United States Government as represented by the
+% Administrator of the National Aeronautics and Space Administration.
+% All Rights Reserved.
+%
+% =========================================================================
