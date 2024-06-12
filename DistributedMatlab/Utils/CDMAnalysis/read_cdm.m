@@ -161,6 +161,7 @@ objParms = {
    'Exclusion_Volume_Radius', 'f'; % CDM special COMMENT field
    'TIME_LASTOB_START', 't';
    'TIME_LASTOB_END', 't';
+   'OD_DATA_SOURCE', 's';
    'RECOMMENDED_OD_SPAN', 'f';
    'ACTUAL_OD_SPAN', 'f';
    'OBS_AVAILABLE', 'f';
@@ -324,8 +325,12 @@ for ii = 1:NidxComment
             data{i} = strrep(data{i},char(194),'');
             data{i} = strrep(data{i},char(160),' ');
             disp(['After  replacement: ' data{i}])
-        end    
+        end
     end
+    % OD Data source
+    data{i} = strrep(data{i}, ...
+        'COMMENT OD_DATA_SOURCE', ...
+        'OD_DATA_SOURCE');
     % Covariance cross-correction params
     data{i} = strrep(data{i}, ...
         'COMMENT DCP Density Forecast Uncertainty', ...
