@@ -96,7 +96,7 @@ classdef (SharedTestFixtures = { ...
                 
             % Check for non- Positive Definite Error Throw
             testCase.verifyWarning(@()PcElrod(r1_J2K*1000,v1_J2K*1000,C1_J2K,r2_J2K*1000,v2_J2K*1000,C2_J2K,HBR,[],3),...
-                    'RemediateCovariance2x2:stdNPD');
+                    'RemediateCovariance2x2:remediatedNPD');
                 
             % Calculate 3D PC            
             [Pc,outputStruct] = Pc3D_Hall(r1_J2K*1000,v1_J2K*1000,C1_J2K,r2_J2K*1000,v2_J2K*1000,C2_J2K,HBR);
@@ -325,6 +325,7 @@ end
 %                               correct Alfano data
 % L. Baars       | 12-27-2023 | Updated unit test to reflect changes of
 %                               errors to warnings within Pc3D_Hall.m
+% L. Baars       | 07-23-2024 | Fixed warning code for one of the checks.
 
 % =========================================================================
 %

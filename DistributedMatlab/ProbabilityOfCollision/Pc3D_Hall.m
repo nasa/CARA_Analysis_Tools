@@ -1555,8 +1555,6 @@ else
     % Calculate the time that Ncdot peaks
     if out.Ncmaxima == 0
         out.TpeakConj = NaN;
-    elseif out.Ncmaxima == 1
-        out.TpeakConj = out.Teph(imax);
     else
         [~,imax] = max(Ncdt);
         out.TpeakConj = out.Teph(imax);
@@ -2051,6 +2049,11 @@ end
 %                                the POP calculation process.
 % L. Baars       | 03-05-2024  | Modified fractional exponent to use more
 %                                stable nthroot() function.
+% D. Hall        | 06-28-2024  | Modified code to fix small bug in output
+%                                TpeakConj parameter; previously it was
+%                                incorrectly calculated using the small-HBR
+%                                limit collision rate curve, rather than
+%                                the actual curve.
 
 % =========================================================================
 %

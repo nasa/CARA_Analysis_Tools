@@ -196,7 +196,7 @@ classdef (SharedTestFixtures = { ...
                 
             % Check for non-Positive Definite Error Throw
             testCase.verifyWarning(@()PcElrod(r1_J2K*1000,v1_J2K*1000,C1_J2K,r2_J2K*1000,v2_J2K*1000,C2_J2K,HBR,[],3),...
-                    'RemediateCovariance2x2:stdNPD')
+                    'RemediateCovariance2x2:remediatedNPD')
             [Pc,~,IsPosDef,IsRemediated] = PcElrod(r1_J2K*1000,v1_J2K*1000,C1_J2K,r2_J2K*1000,v2_J2K*1000,C2_J2K,HBR,[],3);
             testCase.verifyEqual(Pc,expSolution,'AbsTol',Accuracy);
             testCase.verifyTrue(IsPosDef);
@@ -318,6 +318,7 @@ end
 %                               added test for default parameters
 % E. White       | 08-09-2023 | Changed unit tests to use correct Alfano 
 %                               data
+% L. Baars       | 07-23-2024 | Fixed warning code for one of the checks.
 
 % =========================================================================
 %
