@@ -1,0 +1,23 @@
+ 
+------------------------------------------
+---- Constellation Evaluation Results ----
+------------------------------------------
+ 
+Evaluation ID: OneWebPhase1_MeasuredBrightness
+Number of constellation satellites = 1980
+Number of constellation orbital shells = 1
+Altitude of constellation satellites = 1200 km
+Inclination of constellation satellites = 87.9 deg
+MMT data path for satellites: data\MMT\OneWeb
+Zenith magnitude quantiles: 7.67 (50%) 6.8 (90%) 6.27 (95%)
+Fraction of orbital shell 1 measured to be brighter than SATCON-1 recommendation of 7.85 mag at zenith = 65.7%
+Maximum observation zenith angle considered = 90 deg
+Rule set used for  light pollution evaluation = 1 (medium stringency)
+ 
+Overall light pollution level = 41.2 and light pollution risk = VERY HIGH
+ 
+RECOMMENDATION: Constellation redesign recommended to mitigate the estimated VERY HIGH level of light pollution risk
+ 
+------------------------------------------
+---- Constellation Evaluation Tables  ----
+------------------------------------------

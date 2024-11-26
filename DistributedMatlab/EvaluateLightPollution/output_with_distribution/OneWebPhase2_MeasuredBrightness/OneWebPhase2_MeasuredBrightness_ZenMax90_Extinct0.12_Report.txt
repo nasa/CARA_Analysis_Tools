@@ -1,0 +1,25 @@
+ 
+------------------------------------------
+---- Constellation Evaluation Results ----
+------------------------------------------
+ 
+Evaluation ID: OneWebPhase2_MeasuredBrightness
+Number of constellation satellites = 6372
+Number of constellation orbital shells = 3
+Altitude(s) of constellation shells = 1200 km
+Inclinations(s) of constellation shells = 40 to 87.9 km
+MMT data path for satellites: data\MMT\OneWeb
+Fraction of orbital shell 1 measured to be brighter than SATCON-1 recommendation of 7.85 mag at zenith = 65.7%
+Fraction of orbital shell 2 measured to be brighter than SATCON-1 recommendation of 7.85 mag at zenith = 65.7%
+Fraction of orbital shell 3 measured to be brighter than SATCON-1 recommendation of 7.85 mag at zenith = 65.7%
+Overall fraction measured to be brighter than SATCON-1 recommendation at zenith 65.7%
+Maximum observation zenith angle considered = 90 deg
+Rule set used for  light pollution evaluation = 1 (medium stringency)
+ 
+Overall light pollution level = 36.7 and light pollution risk = VERY HIGH
+ 
+RECOMMENDATION: Constellation redesign recommended to mitigate the estimated VERY HIGH level of light pollution risk
+ 
+------------------------------------------
+---- Constellation Evaluation Tables  ----
+------------------------------------------

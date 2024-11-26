@@ -1,0 +1,233 @@
+ 
+Function EvalConstellation begin time = 2022-12-30 11:01:06
+ 
+Using satellite MMT data from: data\MMT\OneWeb
+Processing MMT data in data\MMT\OneWeb
+Reading 43 data files
+ MMTSat = 6980, Ntrk = 2, Ndat = 1390
+ MMTSat = 6983, Ntrk = 2, Ndat = 1618
+ MMTSat = 6984, Ntrk = 4, Ndat = 3446
+ MMTSat = 6985, Ntrk = 2, Ndat = 2255
+ MMTSat = 6986, Ntrk = 3, Ndat = 1352
+ MMTSat = 6987, Ntrk = 3, Ndat = 4015
+ MMTSat = 6988, Ntrk = 1, Ndat = 671
+ MMTSat = 6989, Ntrk = 1, Ndat = 224
+ MMTSat = 6990, Ntrk = 1, Ndat = 546
+ MMTSat = 6991, Ntrk = 1, Ndat = 340
+ MMTSat = 6995, Ntrk = 2, Ndat = 705
+ MMTSat = 6996, Ntrk = 2, Ndat = 970
+ MMTSat = 6997, Ntrk = 2, Ndat = 1637
+ MMTSat = 6998, Ntrk = 3, Ndat = 1196
+ MMTSat = 6999, Ntrk = 1, Ndat = 1089
+ MMTSat = 7002, Ntrk = 1, Ndat = 313
+ MMTSat = 7004, Ntrk = 1, Ndat = 413
+ MMTSat = 7006, Ntrk = 1, Ndat = 110
+ MMTSat = 7010, Ntrk = 3, Ndat = 2612
+ MMTSat = 7021, Ntrk = 1, Ndat = 524
+ MMTSat = 7023, Ntrk = 1, Ndat = 114
+ MMTSat = 7028, Ntrk = 1, Ndat = 265
+ MMTSat = 7029, Ntrk = 1, Ndat = 415
+ MMTSat = 7032, Ntrk = 4, Ndat = 2304
+ MMTSat = 7036, Ntrk = 2, Ndat = 1309
+ MMTSat = 7043, Ntrk = 1, Ndat = 189
+ MMTSat = 7046, Ntrk = 2, Ndat = 1567
+ MMTSat = 7214, Ntrk = 2, Ndat = 1642
+ MMTSat = 7242, Ntrk = 2, Ndat = 1082
+ MMTSat = 7243, Ntrk = 1, Ndat = 1199
+ MMTSat = 7252, Ntrk = 1, Ndat = 1027
+ MMTSat = 7269, Ntrk = 3, Ndat = 2518
+ MMTSat = 7351, Ntrk = 2, Ndat = 1287
+ MMTSat = 7352, Ntrk = 3, Ndat = 2965
+ MMTSat = 7388, Ntrk = 3, Ndat = 3668
+ MMTSat = 7436, Ntrk = 3, Ndat = 2610
+ MMTSat = 7437, Ntrk = 2, Ndat = 874
+ MMTSat = 7454, Ntrk = 3, Ndat = 2262
+ MMTSat = 7496, Ntrk = 3, Ndat = 3099
+ MMTSat = 7878, Ntrk = 2, Ndat = 698
+ MMTSat = 8253, Ntrk = 2, Ndat = 429
+ MMTSat = 8259, Ntrk = 1, Ndat = 269
+ MMTSat = 8264, Ntrk = 1, Ndat = 218
+ Normalizing to a range of 1200 km
+---- TOTAL DATA SET ----
+Nsat = 43, Ntrk = 83, Ndat = 57436
+Fitting the data using 3 component aA model
+Shell # 1 at 1200 km has
+ zero extinction Fb values = 0.65697 down to 1.7411e-05
+ with extinction Fb values = 0.55187 down to 0
+Shell at 1200 km is partially sunlit above 90 deg zenith for 0 < SDA < 65.37 deg
+No Matlab save file found
+Evaluating light pollution metrics
+ Calculating metrics for solar depression angle = 0 deg
+SDA = 0 Na = 358.8442 Ni = 358.8442 Nb = 41.397
+ Calculating metrics for solar depression angle = 12 deg
+SDA = 12 Na = 358.8442 Ni = 335.7009 Nb = 41.3962
+ Calculating metrics for solar depression angle = 18 deg
+SDA = 18 Na = 358.8442 Ni = 316.021 Nb = 41.1992
+ Calculating metrics for solar depression angle = 21 deg
+SDA = 21 Na = 358.8442 Ni = 304.8167 Nb = 40.7518
+ Calculating metrics for solar depression angle = 24 deg
+SDA = 24 Na = 358.8442 Ni = 292.1562 Nb = 39.7781
+ Calculating metrics for solar depression angle = 27 deg
+SDA = 27 Na = 358.8442 Ni = 279.5543 Nb = 35.4839
+ Calculating metrics for solar depression angle = 30 deg
+SDA = 30 Na = 358.8442 Ni = 265.264 Nb = 27.4163
+ Calculating metrics for solar depression angle = 33 deg
+SDA = 33 Na = 358.8442 Ni = 250.4461 Nb = 18.5191
+ Calculating metrics for solar depression angle = 36 deg
+SDA = 36 Na = 358.8442 Ni = 234.6491 Nb = 11.1253
+ Calculating metrics for solar depression angle = 39 deg
+SDA = 39 Na = 358.8442 Ni = 217.1832 Nb = 6.0415
+ Calculating metrics for solar depression angle = 42 deg
+SDA = 42 Na = 358.8442 Ni = 199.8447 Nb = 2.961
+ Calculating metrics for solar depression angle = 45 deg
+SDA = 45 Na = 358.8442 Ni = 180.6479 Nb = 1.2168
+ Calculating metrics for solar depression angle = 48 deg
+SDA = 48 Na = 358.8442 Ni = 159.6183 Nb = 0.3537
+ Calculating metrics for solar depression angle = 51 deg
+SDA = 51 Na = 358.8442 Ni = 134.9421 Nb = 0.051555
+ Calculating metrics for solar depression angle = 54 deg
+SDA = 54 Na = 358.8442 Ni = 102.1558 Nb = 0.002096
+ Calculating metrics for solar depression angle = 57 deg
+SDA = 57 Na = 358.8442 Ni = 65.4422 Nb = 3.1444e-06
+ Calculating metrics for solar depression angle = 60 deg
+SDA = 60 Na = 358.8442 Ni = 30.4423 Nb = 0
+ Calculating metrics for solar depression angle = 63 deg
+SDA = 63 Na = 358.8442 Ni = 9.1434 Nb = 0
+ Calculating metrics for solar depression angle = 66 deg
+SDA = 66 Na = 358.8442 Ni = 0 Nb = 0
+ Calculating metrics for solar depression angle = 69 deg
+SDA = 69 Na = 358.8442 Ni = 0 Nb = 0
+ Calculating metrics for solar depression angle = 72 deg
+SDA = 72 Na = 358.8442 Ni = 0 Nb = 0
+ Calculating metrics for solar depression angle = 75 deg
+SDA = 75 Na = 358.8442 Ni = 0 Nb = 0
+ Calculating metrics for solar depression angle = 78 deg
+SDA = 78 Na = 358.8442 Ni = 0 Nb = 0
+ Calculating metrics for solar depression angle = 81 deg
+SDA = 81 Na = 358.8442 Ni = 0 Nb = 0
+ Calculating metrics for solar depression angle = 84 deg
+SDA = 84 Na = 358.8442 Ni = 0 Nb = 0
+Elapsed time is 205.564299 seconds.
+ 
+------------------------------------------
+---- Constellation Evaluation Results ----
+------------------------------------------
+ 
+Evaluation ID: OneWebPhase1_MeasuredBrightness
+Number of constellation satellites = 1980
+Number of constellation orbital shells = 1
+Altitude of constellation satellites = 1200 km
+Inclination of constellation satellites = 87.9 deg
+MMT data path for satellites: data\MMT\OneWeb
+Zenith magnitude quantiles: 7.67 (50%) 6.8 (90%) 6.27 (95%)
+Fraction of orbital shell 1 measured to be brighter than SATCON-1 recommendation of 7.85 mag at zenith = 65.7%
+Maximum observation zenith angle considered = 90 deg
+Rule set used for  light pollution evaluation = 1 (medium stringency)
+ 
+Overall light pollution level = 41.2 and light pollution risk = VERY HIGH
+ 
+RECOMMENDATION: Constellation redesign recommended to mitigate the estimated VERY HIGH level of light pollution risk
+ 
+------------------------------------------
+---- Constellation Evaluation Tables  ----
+------------------------------------------
+ 
+Evaluation for low observer latitudes, i.e., 0 <= |Latitude| <= 23.5 deg
+ 
+    SolarDepression    Nabove    Nsunlit     Nbright      Maxbright    LightPollutionLevel    LightPollutionRisk
+    _______________    ______    _______    __________    _________    ___________________    __________________
+
+     0                 114.58    114.58          4.275    NaN                 NaN             'N/A'             
+    12                 114.58     102.9         4.2743    NaN                 NaN             'N/A'             
+    18                 114.58    93.687         4.2151      1              4.2151             'HIGH'            
+    21                 114.58    88.608         4.1013      1              4.1013             'HIGH'            
+    24                 114.58    83.278         3.8997      1              3.8997             'HIGH'            
+    27                 114.58    77.743         3.5336      1              3.5336             'HIGH'            
+    30                 114.58    72.036         2.9483      1              2.9483             'HIGH'            
+    33                 114.58    66.191         2.1865      1              2.1865             'HIGH'            
+    36                 114.58    60.235         1.4218      1              1.4218             'HIGH'            
+    39                 114.58    54.203        0.82399      1             0.82399             'MEDIUM'          
+    42                 114.58    48.116        0.43848      1             0.43848             'MEDIUM'          
+    45                 114.58    41.681         0.2086      1              0.2086             'MEDIUM'          
+    48                 114.58    34.977       0.068567      1            0.068567             'LOW'             
+    51                 114.58     28.19       0.010957      1            0.010957             'LOW'             
+    54                 114.58     21.38     0.00047326      1          0.00047326             'VERY LOW'        
+    57                 114.58    14.668        7.4e-07      1             7.4e-07             'VERY LOW'        
+    60                 114.58    8.2745              0      1                   0             'NONE'            
+    63                 114.58    2.7038              0      1                   0             'NONE'            
+    66                 114.58         0              0      1                   0             'NONE'            
+
+ 
+Evaluation for mid observer latitudes, i.e., 23.5 < |Latitude| <= 66.5 deg
+ 
+    SolarDepression    Nabove    Nsunlit     Nbright      Maxbright    LightPollutionLevel    LightPollutionRisk
+    _______________    ______    _______    __________    _________    ___________________    __________________
+
+     0                 284.07    284.07          8.605    NaN                 NaN             'N/A'             
+    12                 284.07    270.04          8.605    NaN                 NaN             'N/A'             
+    18                 284.07    258.09         8.5232      1              8.5232             'HIGH'            
+    21                 284.07    251.12          8.357      1               8.357             'HIGH'            
+    24                 284.07    243.49         8.0483      1              8.0483             'HIGH'            
+    27                 284.07    235.17         7.4534      1              7.4534             'HIGH'            
+    30                 284.07    226.13         6.4382      1              6.4382             'HIGH'            
+    33                 284.07    216.29         5.0207      1              5.0207             'HIGH'            
+    36                 284.07     205.6         3.4864      1              3.4864             'HIGH'            
+    39                 284.07    193.93         2.1838      1              2.1838             'HIGH'            
+    42                 284.07    181.14         1.2671      1              1.2671             'HIGH'            
+    45                 284.07    167.03        0.66766      1             0.66766             'MEDIUM'          
+    48                 284.07    159.62         0.3537      1              0.3537             'MEDIUM'          
+    51                 284.07    134.94       0.051555      1            0.051555             'LOW'             
+    54                 284.07    102.16       0.002096      1            0.002096             'VERY LOW'        
+    57                 284.07    65.442     3.1444e-06      1          3.1444e-06             'VERY LOW'        
+    60                 284.07    30.442              0      1                   0             'NONE'            
+    63                 284.07    9.1434              0      1                   0             'NONE'            
+    66                 284.07         0              0      1                   0             'NONE'            
+
+ 
+Evaluation for high observer latitudes, i.e., 66.5 < |Latitude| <= 90 deg
+ 
+    SolarDepression    Nabove    Nsunlit    Nbright    Maxbright    LightPollutionLevel    LightPollutionRisk
+    _______________    ______    _______    _______    _________    ___________________    __________________
+
+     0                 358.84    358.84     41.397     NaN             NaN                 'N/A'             
+    12                 358.84     335.7     41.396     NaN             NaN                 'N/A'             
+    18                 358.84    316.02     41.199       1          41.199                 'VERY HIGH'       
+    21                 358.84    304.82     40.752       1          40.752                 'VERY HIGH'       
+    24                 358.84    292.16     39.778       1          39.778                 'VERY HIGH'       
+    27                 358.84    279.55     35.484       1          35.484                 'VERY HIGH'       
+    30                 358.84    265.26     27.416       1          27.416                 'VERY HIGH'       
+    33                 358.84    250.45     18.519       1          18.519                 'VERY HIGH'       
+    36                 358.84    234.65     11.125       1          11.125                 'VERY HIGH'       
+    39                 358.84    217.18     6.0415       1          6.0415                 'HIGH'            
+    42                 358.84    199.84      2.961       1           2.961                 'HIGH'            
+    45                 358.84    180.65     1.2168       1          1.2168                 'HIGH'            
+    48                 358.84         0          0       1               0                 'NONE'            
+
+ 
+Evaluation for all observer latitudes, i.e., 0 < |Latitude| <= 90 deg
+ 
+    SolarDepression    Nabove    Nsunlit     Nbright      Maxbright    LightPollutionLevel    LightPollutionRisk
+    _______________    ______    _______    __________    _________    ___________________    __________________
+
+     0                 358.84    358.84         41.397    NaN                 NaN             'N/A'             
+    12                 358.84     335.7         41.396    NaN                 NaN             'N/A'             
+    18                 358.84    316.02         41.199      1              41.199             'VERY HIGH'       
+    21                 358.84    304.82         40.752      1              40.752             'VERY HIGH'       
+    24                 358.84    292.16         39.778      1              39.778             'VERY HIGH'       
+    27                 358.84    279.55         35.484      1              35.484             'VERY HIGH'       
+    30                 358.84    265.26         27.416      1              27.416             'VERY HIGH'       
+    33                 358.84    250.45         18.519      1              18.519             'VERY HIGH'       
+    36                 358.84    234.65         11.125      1              11.125             'VERY HIGH'       
+    39                 358.84    217.18         6.0415      1              6.0415             'HIGH'            
+    42                 358.84    199.84          2.961      1               2.961             'HIGH'            
+    45                 358.84    180.65         1.2168      1              1.2168             'HIGH'            
+    48                 358.84    159.62         0.3537      1              0.3537             'MEDIUM'          
+    51                 358.84    134.94       0.051555      1            0.051555             'LOW'             
+    54                 358.84    102.16       0.002096      1            0.002096             'VERY LOW'        
+    57                 358.84    65.442     3.1444e-06      1          3.1444e-06             'VERY LOW'        
+    60                 358.84    30.442              0      1                   0             'NONE'            
+    63                 358.84    9.1434              0      1                   0             'NONE'            
+    66                 358.84         0              0      1                   0             'NONE'            
+
+ 
+Function EvalConstellation end time = 2022-12-30 11:05:43

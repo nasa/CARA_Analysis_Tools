@@ -1,0 +1,23 @@
+ 
+------------------------------------------
+---- Constellation Evaluation Results ----
+------------------------------------------
+ 
+Evaluation ID: Iridium2ndGen_MeasuredBrightness
+Number of constellation satellites = 75
+Number of constellation orbital shells = 1
+Altitude of constellation satellites = 780 km
+Inclination of constellation satellites = 86.4 deg
+MMT data path for satellites: data\MMT\Iridium_2ndGen
+Zenith magnitude quantiles: 5.46 (50%) 4.8 (90%) 4.63 (95%)
+Fraction of orbital shell 1 measured to be brighter than SATCON-1 recommendation of 7.38 mag at zenith = 100%
+Maximum observation zenith angle considered = 90 deg
+Rule set used for  light pollution evaluation = 1 (medium stringency)
+ 
+Overall light pollution level = 4.53 and light pollution risk = HIGH
+ 
+RECOMMENDATION: Constellation redesign recommended to mitigate the estimated HIGH level of light pollution risk
+ 
+------------------------------------------
+---- Constellation Evaluation Tables  ----
+------------------------------------------

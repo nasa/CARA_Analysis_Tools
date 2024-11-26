@@ -1,0 +1,23 @@
+ 
+------------------------------------------
+---- Constellation Evaluation Results ----
+------------------------------------------
+ 
+Evaluation ID: Starlink1stShell_MeasuredBrightness
+Number of constellation satellites = 1584
+Number of constellation orbital shells = 1
+Altitude of constellation satellites = 550 km
+Inclination of constellation satellites = 53 deg
+MMT data path for satellites: data\MMT\StarLink_VisorSat
+Zenith magnitude quantiles: 6.12 (50%) 4.92 (90%) 4.68 (95%)
+Fraction of orbital shell 1 measured to be brighter than SATCON-1 recommendation of 7 mag at zenith = 99.86%
+Maximum observation zenith angle considered = 90 deg
+Rule set used for  light pollution evaluation = 1 (medium stringency)
+ 
+Overall light pollution level = 9.69 and light pollution risk = HIGH
+ 
+RECOMMENDATION: Constellation redesign recommended to mitigate the estimated HIGH level of light pollution risk
+ 
+------------------------------------------
+---- Constellation Evaluation Tables  ----
+------------------------------------------
