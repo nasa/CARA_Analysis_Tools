@@ -5,13 +5,13 @@ classdef (SharedTestFixtures = ...
 %
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2024 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
 % =========================================================================
 %
-% Initial version: Jul 2023;  Latest update: Jul 2023
+% Initial version: Jul 2023;  Latest update: Nov 2024
 %
 % ----------------- BEGIN CODE -----------------
     
@@ -24,16 +24,13 @@ classdef (SharedTestFixtures = ...
             
             [V1, V2, L1, L2] = eig2x2([a, b, d]);
             
-            % Swap values of a and d so a > d (for checking eigenvalues)
-            t = a;
-            i = a < d;
-            a(i) = d(i);
-            d(i) = t(i);
-            
-            testCase.verifyEqual(a, L1, 'RelTol', 1E-5, 'AbsTol', 1E-5);
-            testCase.verifyEqual(d, L2, 'RelTol', 1E-5, 'AbsTol', 1E-5);
-            testCase.verifyEqual(V1, repmat([1, 0], 1000, 1));
-            testCase.verifyEqual(V2, repmat([0, 1], 1000, 1));
+            for i = 1:1000
+                [V, D] = eig([a(i), b(i); b(i), d(i)], 'vector');
+                [D, idx] = sort(D, 'descend');
+                V = V(:, idx);
+                testCase.verifyEqual([L1(i); L2(i)], D, 'RelTol', 1E-12);
+                testCase.verifyEqual([V1(i, :)', V2(i, :)'], V);
+            end
         end
         
         % Tests 2x2 zero matrix
@@ -85,6 +82,24 @@ classdef (SharedTestFixtures = ...
                 testCase.verifyEqual([V1(i, :)', V2(i, :)'], V);
             end
         end
+        
+        % Test the default covariance, which can cause the determinant
+        % calculation to fail because the diagonals are so much larger than
+        % the off-diagonals that floating point subtraction of the numbers
+        % fails
+        function testDefaultCovariance (testCase)
+            a = 4.06806226869326435234562435e+15;
+            b = 251651.25;
+            d = 4.06806226869326435234562435e+15;
+            
+            [V1, V2, L1, L2] = eig2x2([a, b, d]);
+            
+            [V, D] = eig([a, b; b, d],'vector');
+            [D, idx] = sort(D, 'descend');
+            V = V(:, idx);
+            testCase.verifyEqual([L1; L2], D);
+            testCase.verifyEqual([V1(1, :)', V2(1, :)'], V);
+        end
     end
     
 end
@@ -98,10 +113,13 @@ end
 % Developer      |    Date    |     Description
 %--------------------------------------------------
 % E. White       | 07-12-2023 | Initial development
+% L. Baars       | 11-29-2024 | Updated testDiagonal unit test to check
+%                               against eig() outputs. Added unit test for
+%                               the default covariance.
 
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2024 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %

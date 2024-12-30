@@ -5,7 +5,7 @@ function [V1, V2, L1, L2] = eig2x2(Araw)
 %
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2024 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -39,7 +39,7 @@ function [V1, V2, L1, L2] = eig2x2(Araw)
 %
 % =========================================================================
 %
-% Initial version: May 2022;  Latest update: Jul 2023
+% Initial version: May 2022;  Latest update: Nov 2024
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -54,6 +54,7 @@ function [V1, V2, L1, L2] = eig2x2(Araw)
     T = Araw(:,1)+Araw(:,3);
     D = Araw(:,1).*Araw(:,3)-Araw(:,2).^2;
     
+    % Eignevalues calculation
     L1 = (T + sqrt(T .^ 2 - 4 .* D)) ./ 2; % Largest  eigenvalue
     L2 = (T - sqrt(T .^ 2 - 4 .* D)) ./ 2; % Smallest eigenvalue
     
@@ -73,13 +74,27 @@ function [V1, V2, L1, L2] = eig2x2(Araw)
 
     % Eigenvectors for A matrices with zero off-diagonal values
     c0 = ~c0;
-    V1(c0,1) = 1; V2(c0,1) = 0;
-    V1(c0,2) = 0; V2(c0,2) = 1;
+    if any(c0)
+        ca = Araw(:,3) <= Araw(:,1);
+        c1 = c0 & ca;
+        V1(c1,1) = 1; V2(c1,1) = 0;
+        V1(c1,2) = 0; V2(c1,2) = 1;
+        c1 = c0 & ~ca;
+        V1(c1,1) = 0; V2(c1,1) = 1;
+        V1(c1,2) = 1; V2(c1,2) = 0;
+    end
     
-    % Final special check, check for "b" values that are close to 0, but
-    % aren't exactly 0. Run eigenvalue decomposition manually since this
-    % algorithm starts to break down with abs(b) < 1e-2
-    c0 = abs(Araw(:,2)) < 1e-2 & Araw(:,2) ~= 0;
+    % Find instances where the determinant is not accurately calculated
+    % due to floating point representation errors
+    floatErrIdx = (Araw(:,1).*Araw(:,3) == Araw(:,1).*Araw(:,3)-Araw(:,2).^2) & ...
+        Araw(:,2).^2 ~= 0;
+    
+    % Check for "b" values that are close to 0, but aren't exactly 0. The
+    % eig2x2 algorithm starts to break down with abs(b) < 1e-2
+    bVal0Idx = abs(Araw(:,2)) < 1e-2 & Araw(:,2) ~= 0;
+    
+    % Manually run eig() for any of the special checks
+    c0 = floatErrIdx | bVal0Idx;
     if sum(c0) > 0
         fix = find(c0);
         for i = 1:length(fix)
@@ -107,10 +122,15 @@ end
 % L. Baars       | 05-19-2022 | Initial development
 % E. White       | 07-12-2023 | Added compliant documentation, fixed one
 %                               instance of division to be componentwise
+% D. Hall        | 11-27-2024 | Fixed issue for diagonal covariances that
+%                               produce out-of-order eigenvectors
+% L. Baars       | 11-29-2024 | Fixed the issue where floating point
+%                               precision calculation errors cause
+%                               imaginary eig2x2 outputs.
 
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2024 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
