@@ -29,14 +29,18 @@ function [MaxPc] = FrisbeeMaxPc(r1,v1,cov1,r2,v2,cov2,HBR,RelTol,HBRType)
 %
 % Example/Validation Cases:
 %
-% Other m-files required: None
-% Subfunctions: None
+% Other m-files required: 
+%                   PcCircle.m
+% Subfunctions: 
+%                   Inv2X2
+%                   DetermineKa
+%                   HBRType2EstMode
 % MAT-files required: 
-%           Pc2D_Foster.m
+%                   None
 %
 % See also: none
 %
-% March 2018; Last revision: 27-Feb-2023
+% March 2018; Last revision: 04-Mar-2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -56,6 +60,8 @@ function [MaxPc] = FrisbeeMaxPc(r1,v1,cov1,r2,v2,cov2,HBR,RelTol,HBRType)
     if nargin < 9 || isempty(HBRType)
         HBRType = 'circle';
     end
+
+    params.EstimationMode = HBRType2EstMode (HBRType); % Convert HBRType to PcCircle's Estimation Mode
     
     %Reshape Covariance Matrices as needed
     if ~isempty(cov1)
@@ -188,15 +194,8 @@ function [MaxPc] = FrisbeeMaxPc(r1,v1,cov1,r2,v2,cov2,HBR,RelTol,HBRType)
 %         PcApproxFrisbee1 = scale * HBR^2 * exp((-0.5*rrel'*Cnew*rrel)) / (2*pi*sqrt(det(covcombnew)));
 %         PcApproxFrisbee2 = scale * HBR^2 * exp(-0.5) / (2*pi*sqrt(det(covcombnew)));
 
-        % Use Elrod Formulation if HBRType is Circular (should only be
-        % required for unit testing)
-        switch lower(HBRType)
-            case 'circle'
-                Pc2D = PcElrod(r1,v1,cov1,r2,v2,cov2,HBR);
-            otherwise
-                Pc2D = Pc2D_Foster(r1,v1,reshape(cov1,3,3),r2,v2,reshape(cov2,3,3),HBR,RelTol,HBRType);
-        end
-
+        % Use PcCircle
+        Pc2D = PcCircle(r1,v1,cov1,r2,v2,cov2,HBR,params);
 
     else % Pc Calculated with zero covariance as any modifications to covariance actually decrease the Pc
 
@@ -223,14 +222,8 @@ function [MaxPc] = FrisbeeMaxPc(r1,v1,cov1,r2,v2,cov2,HBR,RelTol,HBRType)
 %         PcApproxFrisbee1 = scale * HBR^2 * exp((-0.5*rrel'*Cnew*rrel)) / (2*pi*sqrt(det(covcombnew)));
 %         PcApproxFrisbee2 = scale * HBR^2 * exp(-0.5) / (2*pi*sqrt(det(covcombnew)));
 
-        % Use Elrod Formulation if HBRType is Circular (should only be
-        % required for unit testing)
-        switch lower(HBRType)
-            case 'circle'
-                Pc2D = PcElrod(r1,v1,cov1,r2,v2,cov2,HBR);
-            otherwise
-                Pc2D = Pc2D_Foster(r1,v1,reshape(cov1,3,3),r2,v2,reshape(cov2,3,3),HBR,RelTol,HBRType);
-        end
+        % Use PcCircle
+        Pc2D = PcCircle(r1,v1,cov1,r2,v2,cov2,HBR,params);
 
 
     end
@@ -256,6 +249,24 @@ function Ka = DetermineKa(rrel,C2,C1)
     Ka = [Ka1 Ka2];
 end
 
+function EstimationMode = HBRType2EstMode (HBRType)
+% This function converts the character array HBRType which is an input of
+% the FrisbeeMaxPc to Estimation Mode required in executing PcCircle
+
+switch lower(HBRType)
+    case 'circle'
+        EstimationMode = 64; % This is also the default of PcElrod, Sets the order of Chebyshev polynomial
+    case 'square'
+        EstimationMode = -1; % This corresponds to circumscribing square Pc upper bound
+    case 'squareequarea'
+        EstimationMode =  0; % This corresponds to equal-area square Pc approximation
+    otherwise
+        error('Incorrect HBRType provided as input');
+end
+
+
+end
+
 % ----------------- END OF CODE ------------------
 %
 % Please record any changes to the software in the change history 
@@ -269,6 +280,7 @@ end
 %                               duplicated functions.
 % L. Baars       | 02-27-2023 | Fixed relative pathing issue in addpath
 %                               calls.
+% S. Es haghi    | 03-04-2025 | Modify code to utilize PcCircle
 %    
 
 %% Code to transform event to Match Frisbee's Example

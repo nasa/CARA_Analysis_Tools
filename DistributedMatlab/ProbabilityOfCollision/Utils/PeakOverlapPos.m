@@ -13,7 +13,15 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
 % peak overlap the primary and secondary distributions for time = t. The
 % primary and secondary distributions arise from initial equinoctial 
 % MVN distributions defined at times (t01,t02), with mean eq. states and 
-% covariances (Eb01,Qb01) and (Eb02,Qb02).
+% covariances (Eb01,Qb01) and (Eb02,Qb02). The peak overlap position (POP)
+% is used as the center-of-linearization (CoL) point for a 1st order Taylor
+% series approximation of the motion, as outlined by Hall (2021).
+%
+% This version of the algorithm iteratively estimates the POP, starting
+% with primary and sectiondary expansion-center CoL points located at the
+% nominal mean position. The new CoL estimates are adjsted at each
+% iteration to prevent large orbital energy changes, which stabilizes the
+% iterative process by preventing overshooting of the POP estimate.
 %
 % All time units in s and length units in m, unless otherwise noted.
 %
@@ -54,8 +62,10 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
 %
 % References:
 %
-%    Doyle T. Hall (2020) "Satellite Collision Rates and Probabilities"
-%    in preparation
+% References:
+%
+%    Hall, D. T. "Expected Collision Rates for Tracked Satellites"
+%    Journal of Spacecraft and Rockets, Vol.58. No.3, pp.715-728, 2021.
 %
 %    Vincent T. Coppola (2012a) "Including Velocity Uncertainty in the
 %    Probability of Collision Between Space Objects" AAS 12-247.
@@ -63,7 +73,7 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
 %    Vincent T. Coppola (2012b) "Evaluating the Short Encounter Assumption
 %    of the Probability of Collision Formula" AAS 12-248.
 %
-%    Hereafter these will be referred to as "H20", "C12a" and "C12b".
+%    Hereafter these will be referred to as "H21", "C12a" and "C12b".
 %
 % =========================================================================
 %
@@ -75,7 +85,7 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
 %  convert_cartesian_to_equinoctial.m
 %  jacobian_E0_to_Xt.m
 %
-% Subfunctions: None
+% Subfunctions: AdjustPOPCoL, CalcCoLEnergy
 %
 % MAT-files required: None
 %
@@ -91,16 +101,33 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
 
     % Tolerances for convergence using relative Maha. distance squared 
     if ~isfield(params,'MD2tol') || isempty(params.MD2tol)
-        params.MD2tol = [1e-6 1e-3];
+        params.MD2tol = [1e-12 1e-6];
     end
     if numel(params.MD2tol) == 1
-        params.MD2tol = [params.MD2tol min(sqrt(params.MD2tol),3e-2)];
+        params.MD2tol = [params.MD2tol sqrt(params.MD2tol)];
+    end
+    
+    % Maximum allowed change in relative orbital energy per iteration,
+    % to help stabilize overshooting behavior in peak overlap position
+    % center-of-linearization iterants:
+    %   Notes: 1) MaxRelEnergyChange = Inf imposes no maximum rel. energy
+    %          limit, returning the algorithm to that orginally outlined by
+    %          Hall (2021).
+    %          2) Sensible values for MaxRelEnergyChange are >0 and <<1,
+    %          and the default value was found to work in testing
+    
+    if ~isfield(params,'MaxRelEnergyChange') || isempty(params.MaxRelEnergyChange)
+        params.MaxRelEnergyChange = 0.10;
+        % params.MaxRelEnergyChange = Inf; % No MaxRelEnergyChange adjustment imposed
     end
     
     % Maximum number of iterations to perform
     if ~isfield(params,'maxiter') || isempty(params.maxiter)
         params.maxiter = 100;
     end
+    
+    % Parameters for iterative averaging, to help stabilize oscillatory
+    % behavior in peak overlap position iterants
     avgiter = min(35,round(params.maxiter*0.35));
     acciter = min(25,round(params.maxiter*0.25));
     osciter = min(15,round(params.maxiter*0.15));
@@ -145,7 +172,7 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
 
     % Initialize iteration and convergence variables
     iterating = true; iteration = 0; converged = false; failure = 0;
-    mup_old = NaN; mup_old2 = NaN;
+    mup_old = NaN; mup_old2 = NaN; iterAdj = -Inf;
 
     % Iterate to find the peak overlap position and related quantities
 
@@ -194,33 +221,27 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
         
         % As1pAs2 = As1+As2;
 
-        % Calculate inverses of position covariances
-        % Slower version
-        % [~,~,~,~,CL1,~,As1inv] = CovRemEigValClip(As1,Lclip);
-        % [~,~,~,~,CL2,~,As2inv] = CovRemEigValClip(As2,Lclip);
-        % if params.verbose
-        %     if CL1; disp(' As1 clipped'); end
-        %     if CL2; disp(' As2 clipped'); end
-        % end
-        % Faster version
-        [Veig,Leig] = eig(As1); Leig = diag(Leig); 
-        Leig(Leig < Lclip) = Lclip;
-        As1inv = Veig * diag(1./Leig) * Veig';
-        [Veig,Leig] = eig(As2); Leig = diag(Leig); 
-        Leig(Leig < Lclip) = Lclip;
-        As2inv = Veig * diag(1./Leig) * Veig';
+        % Calculate inverses of position covariances using eigenvalue
+        % clipping for stability
+        [Veig1,Leig1] = eig(As1); Leig1 = diag(Leig1); 
+        Leig1(Leig1 < Lclip) = Lclip;
+        As1inv = Veig1 * diag(1./Leig1) * Veig1';
+        [Veig2,Leig2] = eig(As2); Leig2 = diag(Leig2); 
+        Leig2(Leig2 < Lclip) = Lclip;
+        As2inv = Veig2 * diag(1./Leig2) * Veig2';
 
-        % Calculate the covariance and peak position of the
-        % overlap distribution
+        % Calculate the covariance of the peak overlap position
+        % overlap distribution using eigenvalue clipping for stability
         Sigpinv = As1inv + As2inv;
-        Sigp = Sigpinv \ I3x3;
+        [Veig,Leig] = eig(Sigpinv); Leig = diag(Leig); 
+        Leig(Leig < Lclip) = Lclip;
+        Sigp = Veig * diag(1./Leig) * Veig';
+        
+        % Calculate the peak overlap position
         mup = Sigp * ( As1inv*ru1 + As2inv*ru2 );
         
-        % No SIGMAp remediation
-        % SigpReminv = Sigpinv \ I3x3;
-
         % Remediate convergence by convolving SIGMAp matrices with
-        % sphere up to radius HBR
+        % sphere of radius HBR
         SigpRem = Sigp + SigpRem0;
         SigpReminv = SigpRem \ I3x3;
 
@@ -238,78 +259,45 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
             vu2p = vu2;
             
         else
-            
+
             % Do mu-point averaging for iterations past max limit to
             % accelerate slow convergence cases
-            if iteration > avgiter
-                mup = 0.5*(mup+mup_old);
+            if iteration > avgiter && iteration > iterAdj+2
+                mup = 0.5*(mup+mup_old);            
             end
             
-            % New estimates for vu1-prime and vu2-prime
-            vu1p = vu1 + Bs1*As1inv*(mup-ru1);
-            vu2p = vu2 + Bs2*As2inv*(mup-ru2);
-
-            % Calculate the energy of the (mup,vu1p) and (mup,vu2p) states
-            mupmag = norm(mup);
-            Energy0 = -GM/mupmag;
-            Energy1 = vu1p'*vu1p/2 + Energy0;
-            Energy2 = vu2p'*vu2p/2 + Energy0;
+            % Calculate new center-of-linearization(CoL) points, adjusted
+            % if necessary to avoid large orbital energy changes
+            beta1 = Bs1*As1inv;
+            [rs1,Energy1,Adj1] = AdjustPOPCoL(mup,xs1(1:3),beta1,xu1, ...
+                                    GM,params.MaxRelEnergyChange,verbose);
+            beta2 = Bs2*As2inv;
+            [rs2,Energy2,Adj2] = AdjustPOPCoL(mup,xs2(1:3),beta2,xu2, ...
+                                    GM,params.MaxRelEnergyChange,verbose);
+            % Record iteration of last adjustment
+            if Adj1 ~= 1 || Adj2 ~= 1
+                iterAdj = iteration;
+            end
             
+            % New estimates for vu1-prime and vu2-prime, the conditional
+            % velocities at each center-of-linearization point, rs1 & rs2
+            vu1p = vu1 + beta1*(rs1-ru1);
+            vu2p = vu2 + beta2*(rs2-ru2);
+            
+            % Report quantities for testing
             if params.verbose
                 disp([' vu1p = ' num2str(vu1p')]);
                 disp([' vu2p = ' num2str(vu2p')]);
-                rs1 = xs1(1:3); d1 = (mup-rs1); Msq1 = d1'*As1inv*d1;
-                rs2 = xs2(1:3); d2 = (mup-rs2); Msq2 = d2'*As2inv*d2;
+                d1 = (xs1(1:3)-rs1); Msq1 = d1'*As1inv*d1;
+                d2 = (xs2(1:3)-rs2); Msq2 = d2'*As2inv*d2;
                 disp([' Msq1,2 = ' num2str(Msq1) ' ' num2str(Msq2)]);
                 disp([' Energy1,2 = ' num2str(Energy1) ' ' num2str(Energy2)]);
+                disp([' Adj1,2 = ' num2str(Adj1) ' ' num2str(Adj2)]);
             end
-            
-            
-            % % Do some testing with the energies
-            % 
-            % EnMx = max(Energy1,Energy2);
-            % emax = 0.99; emax2 = emax^2;
-            % 
-            % % Adjust speeds to avoid unbound orbits
-            % if Energy1 > 0
-            %     vu1pmag = norm(vu1p);
-            %     rhdvh = mup'*vu1p/mupmag/vu1pmag;
-            %     rhdvh2 = min(1,rhdvh^2);
-            %     omrhdvh2 = 1-rhdvh2;
-            %     emx2 = max(emax2,(rhdvh2+1)/2);
-            %     desc = real(sqrt(omrhdvh2*(emx2-rhdvh2)));
-            %     v2Const = GM/omrhdvh2/mupmag;
-            %     v2A = v2Const*(omrhdvh2+desc);
-            %     vu1p = vu1p*sqrt(v2A)/vu1pmag;
-            %     % v2B = v2Const*(omrhdvh2-desc);
-            %     % vu1pB = vu1p*sqrt(v2B)/vu1pmag;
-            %     Energy1 = vu1p'*vu1p/2 + Energy0;
-            % end
-            % 
-            % % Adjust speeds to avoid unbound orbits
-            % if Energy2 > 0
-            %     vu2pmag = norm(vu2p);
-            %     rhdvh = mup'*vu2p/mupmag/vu2pmag;
-            %     rhdvh2 = min(1,rhdvh^2);
-            %     omrhdvh2 = 1-rhdvh2;
-            %     emx2 = max(emax2,(rhdvh2+1)/2);
-            %     desc = real(sqrt(omrhdvh2*(emx2-rhdvh2)));
-            %     v2Const = GM/omrhdvh2/mupmag;
-            %     v2A = v2Const*(omrhdvh2+desc);
-            %     vu2p = vu2p*sqrt(v2A)/vu2pmag;
-            %     % v2B = v2Const*(omrhdvh2-desc);
-            %     % vu2pB = vu2p*sqrt(v2B)/vu2pmag;
-            %     Energy2 = vu2p'*vu2p/2 + Energy0;
-            % end
-            % 
-            % if EnMx > 0
-            %     keyboard;
-            % end
-            
+
             
             % Mark as unconverged if an unbound orbit was
             % encountered during the iteration process
-
             if (Energy1 >= 0) || (Energy2 >= 0)
 
                 % Convergence failure due to unbound primary or
@@ -321,34 +309,27 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
             else
                 
                 % New estimates for expansion-center cartesian states
-                xs1 = [mup; vu1p];
-                xs2 = [mup; vu2p];
-
-                % % Calculate relative position covariance and inverse
-                % As = As1+As2;
-                % [~,~,~,~,~,~,Asinv] = CovRemEigValClip(As,Lclip);
-                % 
-                % % Calculate rel.pos. Maha.distance squared
-                % ru = ru2-ru1;
-                % MD2 = ru' * Asinv * ru;
+                % (i.e., center-of-linearization states)
+                xs1 = [rs1; vu1p];
+                xs2 = [rs2; vu2p];
 
                 % Iteration and convergence processing
-
                 if iteration > 0
 
-                    % Check for convergence using Maha.distance test, imposing
-                    % maximum iterations
+                    % Check for convergence using Maha.distance test,
+                    % imposing maximum iterations, and not allowing
+                    % converence for adjusted-CoL iterants
 
                     dmup = mup_old-mup;
                     dMD2 = dmup' * SigpReminv * dmup;
 
-                    if dMD2 <= params.MD2tol(1)
+                    if dMD2 <= params.MD2tol(1) && iteration ~= iterAdj
                         iterating = false;
                         converged = true;
                     elseif iteration >= params.maxiter
                         iterating = false;
                         converged = false;
-                    elseif iteration > osciter
+                    elseif iteration > osciter && iteration > iterAdj+2
                         % Check for back and forth oscillating convergence
                         dmuposc = mup_old2-mup;
                         dMD2osc = dmuposc' * SigpReminv * dmuposc;
@@ -386,24 +367,6 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
                             ' dMD2 = ' num2str(dMD2) ...
                             ' dMD2osc = ' num2str(dMD2osc)]);
                     end
-
-                    % MD2_dif = abs(MD2-MD2_old);
-                    % if (MD2_dif <= params.MD2tol)
-                    %     iterating = false;
-                    %     converged = true;
-                    % elseif iteration >= params.maxiter
-                    %     iterating = false;
-                    %     converged = false;
-                    % end
-                    % 
-                    % if params.verbose
-                    %     disp([ ...
-                    %         ' rsdiff = ' num2str(norm(mup_old-mup)) ...
-                    %         ' vs1dif = ' num2str(norm(vu1p_old-vu1p)) ...
-                    %         ' vs2dif = ' num2str(norm(vu2p_old-vu2p)) ...
-                    %         ' MD2del = ' num2str(dMD2) ...
-                    %         ' MD2dif = ' num2str(MD2_dif)]);
-                    % end
 
                 end
 
@@ -511,6 +474,7 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
         aux.converged = converged;
         aux.iteration = iteration;
         aux.failure   = failure;
+        aux.iterAdj   = iterAdj;
         
         if converged
             
@@ -560,6 +524,166 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
     
 end
 
+%% ========================================================================
+
+function [rsAdj,EnAdj,fracAdj] = AdjustPOPCoL(mup,rs,beta,Xu,GM,MaxRelEnergyChange,verbose)
+
+% Adjust peak overlap position (POP) center-of-linearization (CoL) point 
+% to allow only a maximum relative energy change
+
+% Persistent variables for refine bounded minimum bisection search
+persistent RBE
+if isempty(RBE)
+    % Parameters for refine_bisection_search (RBE)
+    RBE.Ninitial = 201;
+    RBE.Ninitcut = max(5,round(0.05*RBE.Ninitial));
+    % RBE.Ninitcut = Inf; % Forces bisection search, even if not required
+    RBE.Nbisectmax = 100;
+    RBE.TolX = [5e-4 NaN];
+    RBE.TolY = [NaN NaN];
+    RBE.check_inputs = false;
+end
+
+% Energy at original CoL estimate, A = rs, and at the nominal 
+% POP CoL estimate, B = mup
+EnergyAB = CalcCoLEnergy([0 1],rs,mup,Xu,beta,GM);
+EnergyA  = EnergyAB(1);
+EnergyB  = EnergyAB(2);
+
+% Return with no adjustment if EnergyA is not negative
+if EnergyA >= 0
+    if verbose && ~isequal(MaxRelEnergyChange,Inf)
+        warning('Inputs have invalid orbital energies');
+    end
+    rsAdj = mup; EnAdj = EnergyB; fracAdj = 1;
+    return;
+end
+
+% Relative orbital energy change
+FracEnergyChange = abs(EnergyB-EnergyA)/abs(EnergyA);
+
+% Return nominal CoL estimate if relative energy change is acceptable
+if FracEnergyChange <= MaxRelEnergyChange 
+    rsAdj = mup; EnAdj = EnergyB; fracAdj = 1;
+    return;
+end
+
+% Anonymous function for refine_bounded_extrema (RBE) function
+fun = @(xx) (abs(CalcCoLEnergy(xx,rs,mup,Xu,beta,GM)/EnergyA-1) ...
+             - MaxRelEnergyChange).^2;
+
+% Initial points for RBE bisection search
+xinit = linspace(0,1,RBE.Ninitial); 
+yinit = fun(xinit);
+
+% Perform RBE bisection search only if min point is too close to original
+% CoL, which should be a relatively rare occurence
+[~,imin] = min(yinit); xmin = xinit(imin);
+if imin < RBE.Ninitcut
+    % Include endpoints in RBE if very close to edge
+    if imin <= 2
+        endpoints = true;
+    else
+        endpoints = false;
+    end
+    [xmnma,ymnma,~,~,converged,~,x,y,~,~] = ...
+        refine_bounded_extrema(fun,xinit,yinit,[],RBE.Nbisectmax,1, ...
+                               RBE.TolX,RBE.TolY,endpoints, ...
+                               verbose > 1,RBE.check_inputs); %#ok<ASGLU>
+    if verbose && ~converged
+        warning('Bisection search did not converge');
+    end
+    Nmnma = numel(xmnma);
+    if Nmnma == 0
+        if verbose
+            warning('Bisection search did not find any minima');
+        end
+    else
+        % Get the min point
+        [~,imin] = min(ymnma); xmin = xmnma(imin);
+    end
+end
+
+% Ensure adjusted point is not original CoL itself
+if xmin <= 0
+    xmin = xinit(2);
+end
+
+% Define output quantities
+fracAdj = xmin;
+[EnAdj,rsAdj] = CalcCoLEnergy(fracAdj,rs,mup,Xu,beta,GM);
+
+% % Make test plots
+% Einit = CalcCoLEnergy(xinit,rs,mup,Xu,beta,GM);
+% figure(1); clf;
+% subplot(2,1,1);
+% plot(xinit,Einit,'.-k');
+% subplot(2,1,2);
+% semilogy(NaN,NaN); hold on;
+% if exist('xmnma','var')
+%     plot(xinit,yinit,'*c'); 
+%     plot(x,y,'.-k');
+% else
+%     plot(xinit,yinit,'.-k'); 
+% end
+% plot(xmin,fun(xmin),'or');
+% hold off;
+% keyboard;
+
+return
+end
+
+%% ========================================================================
+
+function [Energy,rs] = CalcCoLEnergy(x,rsA,rsB,Xu,beta,GM)
+
+% Vectorized center-of-linearization (CoL) orbit energy calculation
+
+% Number of points between 3x1 position vectors rsA and rsB, with the
+% input 1xN row vector x having all individual elements 0 <= x(i) <= 1
+N = numel(x);
+
+% Vectorized calculation of intermediate positions: rs = rsA + x*(rsB-rsA) 
+%
+% Less efficient version:
+%
+% repx   = repmat(x,  [3 1]);
+% reprsA = repmat(rsA,[1 N]);
+% reprsB = repmat(rsB,[1 N]);
+% rs = reprsA + repx .* (reprsB-reprsA);
+%
+% More efficient version:
+%
+rs = repmat(rsA,[1 N]) + repmat(x,[3 1]) .* repmat(rsB-rsA,[1 N]);
+
+% Magnitudes of intermediate positions
+rsmag = sqrt(sum(rs.*rs,1));
+
+% Vectorized calculation of conditional velocities:
+%
+%   vup = vu + beta*(rs-ru)    with    beta = Bs*Asinv
+%
+% Less efficient version
+%
+% ru = repmat(Xu(1:3),[1 N]);
+% vu = repmat(Xu(4:6),[1 N]);
+% vup = vu + beta*(rs-ru);
+%
+% More efficient version
+%
+vup = repmat(Xu(4:6),[1 N]) + beta*(rs-repmat(Xu(1:3),[1 N]));
+
+% Magnitude of squared conditional velocity
+vup2 = sum(vup.*vup,1);
+
+% Vector of CoL energies calculated using conditional velocities (1xN)
+Energy = vup2/2 - GM./rsmag;
+
+return
+end
+
+%% ========================================================================
+
 % ----------------- END OF CODE ------------------
 %
 % Please record any changes to the software in the change history 
@@ -579,3 +703,17 @@ end
 %                                expanded non-convergence for POP primary
 %                                or secondary eccentricities >= 1, another
 %                                of indicating unbound POP state orbits.
+% D. Hall        | 2024-DEC-24 | Implemented maximum allowed change in
+%                                relative orbital energy per iteration,
+%                                to help stabilize overshooting behavior
+%                                in POP iterants, which creates unwanted
+%                                nonnegative energy orbits with
+%                                undefined equinoctial elements. Such
+%                                overshooting occurs for very elongated
+%                                covariance PDFs.
+% D. Hall        | 2024-DEC-26 | Changed tolerances for convergence using
+%                                relative Maha. distance squared from 
+%                                   params.MD2tol = [1e-6 1e-3]
+%                                to
+%                                   params.MD2tol = [1e-12 1e-6]
+%                                as required for reliable POP convergence.
