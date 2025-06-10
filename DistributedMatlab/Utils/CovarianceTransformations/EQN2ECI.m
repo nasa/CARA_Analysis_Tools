@@ -1,9 +1,20 @@
-function [ECI] = EQN2ECI(EQN,EQN_State,fr,mu)
+function [ECI] = EQN2ECI(EQN,EQN_State,fr,mu,makeSymmetric)
 %
-% RIC2ECI - This function transforms the Equinoctial covariance matrix to the ECI J2000 frame
-%           based on ECI state vectors r & v
+% EQN2ECI - This function transforms the Equinoctial covariance matrix to
+%           the ECI frame based on ECI state vectors r & v
 %
-% Syntax:  [ECI] = EQN2ECI(EQN,r,v,fr)
+% Syntax:  [ECI] = EQN2ECI(EQN,EQN_State);
+%          [ECI] = EQN2ECI(EQN,EQN_State,fr);
+%          [ECI] = EQN2ECI(EQN,EQN_State,fr,mu);
+%          [ECI] = EQN2ECI(EQN,EQN_State,fr,mu,makeSymmetric);
+%
+% =========================================================================
+%
+% Copyright (c) 2018-2025 United States Government as represented by the
+% Administrator of the National Aeronautics and Space Administration.
+% All Rights Reserved.
+%
+% =========================================================================
 %
 % Inputs:
 %    EQN        -  Covariance matrix in the Equinoctial coordinate frame 
@@ -12,24 +23,28 @@ function [ECI] = EQN2ECI(EQN,EQN_State,fr,mu)
 %    fr         -  Equinoctial element retrograde factor (optional, default = +1) 
 %    mu         -  Gravitational Parameter (km^3/s^2)(optional, default =
 %                  3.986004418e5)
+%    makeSymmetric - (Optional) Make the output ECI matrix symmetric.
+%                    Defaults to true.
+%
+% =========================================================================
 %
 % Outputs:
-%    EQN        -  Covariance matrix in the ECI J2000 coordinate frame 
-%                  (6x6)
+%    ECI        -  Covariance matrix in the ECI coordinate frame      (6x6)
+%
+% =========================================================================
 %
 % Assumptions:
 %           Transformation Occuring in Earth Orbit
 %
-% Examples/Validation Cases: 
-%
-% Other m-files required: None
-% Subfunctions: None
-% MAT-files required:   convert_cartesian_to_equinoctial.m
-%                       jacobian_equinoctial_to_cartesian.m
+% Other m-files required:  convert_cartesian_to_equinoctial.m
+%                          jacobian_equinoctial_to_cartesian.m
+%                          cov_make_symmetric.m
 %
 % See also: None
 %
-% March 2018; 
+% =========================================================================
+%
+% Initial version: Mar 2018;  Latest update: Apr 2025 
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -45,6 +60,19 @@ function [ECI] = EQN2ECI(EQN,EQN_State,fr,mu)
     if Nargin < 4 ||isempty(mu)
         % Earth gravitational constant (EGM-96) [km^3/s^2]
         mu  = 3.986004418e5;
+    end
+    
+    if Nargin < 5 || isempty(makeSymmetric)
+        makeSymmetric = true;
+    end
+    
+    % Add required library paths
+    persistent pathsAdded
+    if isempty(pathsAdded)
+        [p,~,~] = fileparts(mfilename('fullpath'));
+        s = what(fullfile(p, '../AugmentedMath')); addpath(s.path);
+        s = what(fullfile(p, '../OrbitTransformations')); addpath(s.path);
+        pathsAdded = true;
     end
     
     % Get additional Transformation Term Diagonals
@@ -83,6 +111,9 @@ function [ECI] = EQN2ECI(EQN,EQN_State,fr,mu)
     % Transform Covariance
     ECI = J * ReorderMat' * EQN * ReorderMat * J';
     
+    if makeSymmetric
+        ECI = cov_make_symmetric(ECI);
+    end
     
 return
 
@@ -94,5 +125,14 @@ return
 %---------------- CHANGE HISTORY ------------------
 % Developer      |    Date    |     Description
 %--------------------------------------------------
-% T. Lechtenberg | 03-26-2018 |  Initial Development
-% T. Lechtenberg | 07-24-2019 |  Added Option to input mu
+% T. Lechtenberg | 03-26-2018 | Initial Development
+% T. Lechtenberg | 07-24-2019 | Added Option to input mu
+% L. Baars       | 04-23-2025 | Added optional makeSymmetric parameter.
+
+% =========================================================================
+%
+% Copyright (c) 2018-2025 United States Government as represented by the
+% Administrator of the National Aeronautics and Space Administration.
+% All Rights Reserved.
+%
+% =========================================================================

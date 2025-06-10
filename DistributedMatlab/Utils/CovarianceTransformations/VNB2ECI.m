@@ -1,10 +1,19 @@
-function [ECI] = VNB2ECI(VNB,r,v)
+function [ECI] = VNB2ECI(VNB,r,v,makeSymmetric)
 %
 % VNB2ECI - Rotates the VNB covariance matrix to the ECI frame based upon 
 %           ECI state vectors r and v
 %           V = intrack, N= Crosstrack, B = Radial (this version only)
 %
 % Syntax:   [ECI] = VNB2ECI(VNB,r,v)
+%           [ECI] = VNB2ECI(VNB,r,v,makeSymmetric)
+%
+% =========================================================================
+%
+% Copyright (c) 2013-2025 United States Government as represented by the
+% Administrator of the National Aeronautics and Space Administration.
+% All Rights Reserved.
+%
+% =========================================================================
 %
 % Inputs:
 %    VNB -  Covariance matrix in the VNB coordinate frame 
@@ -13,12 +22,16 @@ function [ECI] = VNB2ECI(VNB,r,v)
 %           A 1x3 vector in VNB coordinates
 %    r   -  Position vector in ECI coordinates (1x3 row vector)
 %    v   -  Velocity vector in ECI coordinates (1x3 row vector)
+%    makeSymmetric - (Optional) If VNB is a matrix, make the output
+%                    ECI matrix symmetric. Defaults to true.
 %
 % Outputs:
 %    ECI -  Covariance matrix in the ECI coordinate frame 
 %           (either 3x3 or 6x6 or higher)
 %           -or-
 %           The 1x3 vector in ECI coordinates
+%
+% =========================================================================
 %
 % Examples/Validation Cases: 
 %
@@ -37,32 +50,51 @@ function [ECI] = VNB2ECI(VNB,r,v)
 %    Case 2: 
 %    r   =  [-4401.79040106693, 2487.2992140342, 4849.27211399534];
 %    v   =  [5.18243111622811, -1.25976855947084, 5.33572544154738];
-%    VNB =  [ 5.07880303911165e-005   2.05954035593516e-005  -1.12428539445659e-005  -3.24864683537302e-008  -5.44262051003325e-008   -9.1727471622382e-009; 
-%             2.05954035593515e-005    0.000219882036975235   -5.1503298989629e-006   -2.3101156135079e-007  -2.30148884489457e-008  -1.13983484108389e-008;  
-%            -1.12428539445659e-005  -5.15032989896291e-006   2.26968223745751e-005   1.02273448845561e-008   1.21231737117074e-008   3.98038070924476e-009;   
-%            -3.24864683537302e-008  -2.3101156135079e-007    1.02273448845561e-008    2.7613261353815e-010   3.59543284080792e-011   2.95212111361972e-011;   
-%            -5.44262051003325e-008  -2.30148884489457e-008   1.21231737117074e-008   3.59543284080792e-011   5.83376784140526e-011   9.81697430380092e-012;   
-%            -9.17274716223819e-009  -1.13983484108389e-008   3.98038070924477e-009   2.95212111361972e-011   9.81697430380092e-012   6.06986228410612e-011];
+%    VNB =  [ 5.07880303911165e-05   2.05954035593516e-05  -1.12428539445659e-05  -3.24864683537301e-08  -5.44262051003325e-08   -9.1727471622382e-09
+%             2.05954035593516e-05   0.000219882036975235  -5.15032989896298e-06   -2.3101156135079e-07  -2.30148884489458e-08  -1.13983484108388e-08
+%            -1.12428539445659e-05  -5.15032989896298e-06   2.26968223745751e-05    1.0227344884556e-08   1.21231737117074e-08   3.98038070924482e-09
+%            -3.24864683537301e-08   -2.3101156135079e-07    1.0227344884556e-08    2.7613261353815e-10   3.59543284080792e-11   2.95212111361971e-11
+%            -5.44262051003325e-08  -2.30148884489458e-08   1.21231737117074e-08   3.59543284080792e-11   5.83376784140526e-11   9.81697430380086e-12
+%             -9.1727471622382e-09  -1.13983484108388e-08   3.98038070924482e-09   2.95212111361971e-11   9.81697430380086e-12   6.06986228410613e-11];
 %    ECI =  VNB2ECI(VNB,r,v)
 %    ECI =
-%           [ 8.49052811059557e-05   7.34313265096725e-05   4.85175913616172e-06     -8.93819147483e-08  -3.48147920669746e-08   -8.1805614106083e-08
-%             7.34313265096724e-05   0.000181984380205301  -1.91991275782651e-05  -1.37883632046848e-07   2.41399111430965e-08  -1.48041583781254e-07
-%             4.85175913616176e-06   -1.9199127578265e-05   2.64772284296701e-05    2.6247448398407e-09    -2.820693799819e-08   1.37210275117724e-08
-%               -8.93819147483e-08  -1.37883632046848e-07   2.62474483984069e-09   1.50192880013963e-10   9.09770618452205e-13   1.14989871385754e-10
-%            -3.48147920669746e-08   2.41399111430965e-08    -2.820693799819e-08   9.09770618452207e-13   5.65723257658877e-11    8.8521696527107e-12
-%             -8.1805614106083e-08  -1.48041583781254e-07   1.37210275117724e-08   1.14989871385754e-10   8.85216965271071e-12   1.88403709013413e-10]
+%           [ 8.49052811059557e-05   7.34313265096725e-05   4.85175913616172e-06  -8.93819147482999e-08  -3.48147920669747e-08  -8.18056141060829e-08
+%             7.34313265096725e-05   0.000181984380205301  -1.9199127578265e-05   -1.37883632046848e-07   2.41399111430964e-08  -1.48041583781254e-07
+%             4.85175913616172e-06  -1.9199127578265e-05    2.64772284296701e-05   2.62474483984069e-09  -2.820693799819e-08     1.37210275117724e-08
+%            -8.93819147482999e-08  -1.37883632046848e-07   2.62474483984069e-09   1.50192880013963e-10   9.09770618452172e-13   1.14989871385754e-10
+%            -3.48147920669747e-08   2.41399111430964e-08  -2.820693799819e-08     9.09770618452172e-13   5.65723257658877e-11   8.85216965271068e-12
+%            -8.18056141060829e-08  -1.48041583781254e-07   1.37210275117724e-08   1.14989871385754e-10   8.85216965271068e-12   1.88403709013413e-10]
 %
-% Other m-files required: None
+% =========================================================================
+%
+% Other m-files required: cov_make_symmetric.m
 % Subfunctions: None
 % MAT-files required: None
 %
 % See also: None
 %
-% Author: Dragan Plakalovic
-% March 2013; Last revision: May 2024
+% =========================================================================
+%
+% Initial version: March 2013; Last revision: Apr 2025
 %
 % ----------------- BEGIN CODE -----------------
 
+    % Check for optional input arguments
+    Nargin = nargin;
+    if Nargin < 4 || isempty(makeSymmetric)
+        makeSymmetric = true;
+    elseif Nargin ~= 4
+        error('Incorrect number of arguments passed in');
+    end
+    
+    % Add required library paths
+    persistent pathsAdded
+    if isempty(pathsAdded)
+        [p,~,~] = fileparts(mfilename('fullpath'));
+        s = what(fullfile(p, '../AugmentedMath')); addpath(s.path);
+        pathsAdded = true;
+    end
+    
     % Setting up unit vectors in the velocity, normal, and binormal
     % directions
     h    = cross(r,v);
@@ -120,6 +152,10 @@ function [ECI] = VNB2ECI(VNB,r,v)
     
     end
     
+    if makeSymmetric && size(ECI,1) == size(ECI,2)
+        ECI = cov_make_symmetric(ECI);
+    end
+    
 return
 
 % ----------------- END OF CODE ------------------
@@ -140,3 +176,12 @@ return
 % L. Baars       | 06-03-2021 |  Added the ability to transform higher
 %                                order covariances.
 % L. Baars       | 05-06-2024 |  Fixed example cases documentation.
+% L. Baars       | 04-23-2025 |  Added optional makeSymmetric parameter.
+
+% =========================================================================
+%
+% Copyright (c) 2013-2025 United States Government as represented by the
+% Administrator of the National Aeronautics and Space Administration.
+% All Rights Reserved.
+%
+% =========================================================================

@@ -42,7 +42,7 @@ function [success] = cdm_write_OCMDB(FolderName,CDMFilename,DB,DB_index,params)
 %                         (Default set to "UNKNOWN")
 %   params.ref_mode     = Reference frame for the object states provided
 %                         in the CDM. 1 - EME2000, 2 - ITRF
-%                         (Default reference frame is set to 2)
+%                         (Default reference frame is set to 1)
 %   params.ooInfo.priIsOO
 %                       = Flag representing whether primary data are
 %                         provided through Operator/Owner ephemerides 
@@ -80,7 +80,7 @@ params = set_default_param(params,'priName','UNKNOWN');
 params = set_default_param(params,'secName','UNKNOWN');
 params = set_default_param(params,'priIntDes','UNKNOWN');
 params = set_default_param(params,'secIntDes','UNKNOWN');
-params = set_default_param(params,'ref_mode',2);
+params = set_default_param(params,'ref_mode',1);
 params = set_default_param(params,'ooInfo',[]);
 params.ooInfo =  set_default_param(params.ooInfo,'priIsOO',false);
 params.ooInfo =  set_default_param(params.ooInfo,'secIsOO',false);
@@ -149,7 +149,7 @@ try
     PrintCDMField(fh,'RELATIVE_VELOCITY_N',DB(i,26),'%.1f','[m/s]');
     PrintCDMField(fh,'COLLISION_PROBABILITY',DB(i,156),'%.3e');
     PrintCDMField(fh,'COLLISION_PROBABILITY_METHOD','FOSTER-1992','%s');
-    PrintCDMField(fh,'COMMENT HBR',DB(i,157),'%.1f','[m]');
+    PrintCDMField(fh,'COMMENT HBR',DB(i,157),'%.18g','[m]');
 
     % Object specific data
     for j = 1:2
@@ -225,7 +225,7 @@ try
         end
         EpochUTC = strrep(tcaTimeStr2,'T',' ');
         if params.ref_mode == 2
-            [rITRF,vITRF] = PosVelConvert(DB(i,67+offset:69+offset)./1000,DB(i,70+offset:72+offset)./1000,EpochUTC,'TDR2ECF','4terms');
+            [rITRF,vITRF] = PosVelConvert(DB(i,172+ecioffset:174+ecioffset),DB(i,175+ecioffset:177+ecioffset),EpochUTC,'J2K2ECF','4terms');
             PrintCDMField(fh,'X',rITRF(1),'%.18e','[km]');
             PrintCDMField(fh,'Y',rITRF(2),'%.18e','[km]');
             PrintCDMField(fh,'Z',rITRF(3),'%.18e','[km]');

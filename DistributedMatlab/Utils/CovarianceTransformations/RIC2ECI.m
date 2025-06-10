@@ -1,12 +1,13 @@
-function [ECI] = RIC2ECI(RIC,r,v)
+function [ECI] = RIC2ECI(RIC,r,v,makeSymmetric)
 % RIC2ECI - This function rotates the RIC covariance matrix to the ECI 
 %           frame based on ECI state vectors r & v
 %
 % Syntax: [ECI] = RIC2ECI(RIC,r,v);
+%         [ECI] = RIC2ECI(RIC,r,v,makeSymmetric);
 %
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2013-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -22,6 +23,8 @@ function [ECI] = RIC2ECI(RIC,r,v)
 %               RCI coordinate vector                                 [1x3]
 %    r      -   Position vector in ECI J2000 coordinates (km)         [1x3]
 %    v      -   Velocity vector in ECI J2000 coordinates (km/s)       [1x3]
+%    makeSymmetric - (Optional) If RIC is a matrix, make the output
+%                    ECI matrix symmetric. Defaults to true.
 %
 % =========================================================================
 %
@@ -36,10 +39,26 @@ function [ECI] = RIC2ECI(RIC,r,v)
 %
 % =========================================================================
 %
-% Initial version: Feb 2013;  Latest update: Aug 2023
+% Initial version: Feb 2013;  Latest update: Apr 2025
 %
 % ----------------- BEGIN CODE -----------------
 
+    % Check for optional input arguments
+    Nargin = nargin;
+    if Nargin < 4 || isempty(makeSymmetric)
+        makeSymmetric = true;
+    elseif Nargin ~= 4
+        error('Incorrect number of arguments passed in');
+    end
+    
+    % Add required library paths
+    persistent pathsAdded
+    if isempty(pathsAdded)
+        [p,~,~] = fileparts(mfilename('fullpath'));
+        s = what(fullfile(p, '../AugmentedMath')); addpath(s.path);
+        pathsAdded = true;
+    end
+    
     % Reshape r and v vectors if input as column vector
     r = reshape(r,1,3);
     v = reshape(v,1,3);
@@ -95,6 +114,10 @@ function [ECI] = RIC2ECI(RIC,r,v)
     
     end
     
+    if makeSymmetric && size(ECI,1) == size(ECI,2)
+        ECI = cov_make_symmetric(ECI);
+    end
+    
 return
 
 % ----------------- END OF CODE ------------------
@@ -118,10 +141,11 @@ return
 %                               order covariances. Also added the ability
 %                               to rotate an RIC vector to ECI.
 % E. White       | 08-07-2023 | Added compliant documentation
+% L. Baars       | 04-23-2025 | Added optional makeSymmetric parameter.
 
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2013-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %

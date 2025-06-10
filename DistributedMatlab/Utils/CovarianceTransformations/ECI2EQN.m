@@ -1,13 +1,16 @@
-function [EQN] = ECI2EQN(ECI,r,v,fr,mu)
+function [EQN] = ECI2EQN(ECI,r,v,fr,mu,makeSymmetric)
 % ECI2EQN - This function transforms the ECI covariance matrix to the 
 %           equinoctial frame based on ECI state vectors r & v (assuming
 %           transformation occurs in Earth orbit)
 %
-% Syntax: [EQN] = ECI2EQN(ECI,r,v,fr);
+% Syntax: [EQN] = ECI2EQN(ECI,r,v);
+%         [EQN] = ECI2EQN(ECI,r,v,fr);
+%         [EQN] = ECI2EQN(ECI,r,v,fr,mu);
+%         [EQN] = ECI2EQN(ECI,r,v,fr,mu,makeSymmetric);
 %
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2018-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -23,6 +26,8 @@ function [EQN] = ECI2EQN(ECI,r,v,fr,mu)
 %               default = +1) 
 %    mu     -   Gravitational Parameter (km^3/s^2)(optional, default =
 %               3.986004418e5)
+%    makeSymmetric - (Optional) Make the output EQN matrix symmetric.
+%                    Defaults to true.
 %
 % =========================================================================
 %
@@ -37,10 +42,11 @@ function [EQN] = ECI2EQN(ECI,r,v,fr,mu)
 %
 %   convert_cartesian_to_equinoctial.m
 %   jacobian_equinoctial_to_cartesian.m
+%   cov_make_symmetric.m
 %
 % =========================================================================
 %
-% Initial version: Mar 2018;  Latest update: Aug 2023
+% Initial version: Mar 2018;  Latest update: Apr 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -52,9 +58,22 @@ function [EQN] = ECI2EQN(ECI,r,v,fr,mu)
         fr = 1;
     end
     
-    if Nargin < 5 ||isempty(mu)
+    if Nargin < 5 || isempty(mu)
         % Earth gravitational constant (EGM-96) [km^3/s^2]
         mu  = 3.986004418e5;
+    end
+    
+    if Nargin < 6 || isempty(makeSymmetric)
+        makeSymmetric = true;
+    end
+    
+    % Add required library paths
+    persistent pathsAdded
+    if isempty(pathsAdded)
+        [p,~,~] = fileparts(mfilename('fullpath'));
+        s = what(fullfile(p, '../AugmentedMath')); addpath(s.path);
+        s = what(fullfile(p, '../OrbitTransformations')); addpath(s.path);
+        pathsAdded = true;
     end
     
     % Get additional Transformation Term Diagonals
@@ -89,6 +108,9 @@ function [EQN] = ECI2EQN(ECI,r,v,fr,mu)
     % Transform Covariance
     EQN = ReorderMat * J * ECI * J' * ReorderMat';
     
+    if makeSymmetric
+        EQN = cov_make_symmetric(EQN);
+    end
     
 return
 
@@ -103,10 +125,11 @@ return
 % T. Lechtenberg | 03-26-2018 | Initial Development
 % T. Lechtenberg | 07-24-2019 | Added Option to input mu
 % E. White       | 08-07-2023 | Added compliant documentation
+% L. Baars       | 04-23-2025 | Added optional makeSymmetric parameter.
 
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2018-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %

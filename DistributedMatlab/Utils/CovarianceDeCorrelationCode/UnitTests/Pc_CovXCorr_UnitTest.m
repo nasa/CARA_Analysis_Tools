@@ -42,10 +42,6 @@ classdef (SharedTestFixtures = { ...
             % Convert Primary Object State to Inertial Frame if required
             if strcmpi(cdmobj(1).REF_FRAME,'ITRF')
                 [r1_J2K,v1_J2K] = PosVelConvert(x1(1:3)/1000,x1(4:6)/1000,strrep(cdmhead.TCA,'T',' '),'ECF2J2K','4terms');
-            % % GCRF is not currently accomodated by the available coordinate frame
-            % transfor%mations
-            % elseif strcmpi(cdmobj(1).REF_FRAME,'GCRF')
-            %     [r1_J2K,v1_J2K] = PosVelConvert(x1(1:3)/1000,x1(4:6)/1000,strrep(cdmhead.TCA,'T',' '),'ECF2J2K','4terms');
             elseif strcmpi(cdmobj(1).REF_FRAME,'EME2000')
                 r1_J2K = x1(1:3)/1000;
                 v1_J2K = x1(4:6)/1000;
@@ -76,10 +72,6 @@ classdef (SharedTestFixtures = { ...
             % Convert Secondary Object State to Inertial Frame
             if strcmpi(cdmobj(1).REF_FRAME,'ITRF')
                 [r2_J2K,v2_J2K] = PosVelConvert(x2(1:3)/1000,x2(4:6)/1000,strrep(cdmhead.TCA,'T',' '),'ECF2J2K','4terms');
-            % % GCRF is not currently accomodated by the available coordinate frame
-            % transfor%mations
-            % elseif strcmpi(cdmobj(1).REF_FRAME,'GCRF')
-            %     [r1_J2K,v1_J2K] = PosVelConvert(x1(1:3)/1000,x1(4:6)/1000,strrep(cdmhead.TCA,'T',' '),'ECF2J2K','4terms');
             elseif strcmpi(cdmobj(1).REF_FRAME,'EME2000')
                 r2_J2K = x2(1:3)/1000;
                 v2_J2K = x2(4:6)/1000;
@@ -161,10 +153,6 @@ classdef (SharedTestFixtures = { ...
 %             % Convert Primary Object State to Inertial Frame if required
 %             if strcmpi(cdmobj(1).REF_FRAME,'ITRF')
 %                 [r1_J2K,v1_J2K] = PosVelConvert(x1(1:3)/1000,x1(4:6)/1000,strrep(cdmhead.TCA,'T',' '),'ECF2J2K','4terms');
-%             % % GCRF is not currently accomodated by the available coordinate frame
-%             % transfor%mations
-%             % elseif strcmpi(cdmobj(1).REF_FRAME,'GCRF')
-%             %     [r1_J2K,v1_J2K] = PosVelConvert(x1(1:3)/1000,x1(4:6)/1000,strrep(cdmhead.TCA,'T',' '),'ECF2J2K','4terms');
 %             elseif strcmpi(cdmobj(1).REF_FRAME,'EME2000')
 %                 r1_J2K = x1(1:3)/1000;
 %                 v1_J2K = x1(4:6)/1000;
@@ -195,10 +183,6 @@ classdef (SharedTestFixtures = { ...
 %             % Convert Secondary Object State to Inertial Frame
 %             if strcmpi(cdmobj(1).REF_FRAME,'ITRF')
 %                 [r2_J2K,v2_J2K] = PosVelConvert(x2(1:3)/1000,x2(4:6)/1000,strrep(cdmhead.TCA,'T',' '),'ECF2J2K','4terms');
-%             % % GCRF is not currently accomodated by the available coordinate frame
-%             % transfor%mations
-%             % elseif strcmpi(cdmobj(1).REF_FRAME,'GCRF')
-%             %     [r1_J2K,v1_J2K] = PosVelConvert(x1(1:3)/1000,x1(4:6)/1000,strrep(cdmhead.TCA,'T',' '),'ECF2J2K','4terms');
 %             elseif strcmpi(cdmobj(1).REF_FRAME,'EME2000')
 %                 r2_J2K = x2(1:3)/1000;
 %                 v2_J2K = x2(4:6)/1000;
@@ -278,10 +262,6 @@ classdef (SharedTestFixtures = { ...
             % Convert Primary Object State to Inertial Frame if required
             if strcmpi(cdmobj(1).REF_FRAME,'ITRF')
                 [r1_J2K,v1_J2K] = PosVelConvert(x1(1:3)/1000,x1(4:6)/1000,strrep(cdmhead.TCA,'T',' '),'ECF2J2K','4terms');
-            % % GCRF is not currently accomodated by the available coordinate frame
-            % transfor%mations
-            % elseif strcmpi(cdmobj(1).REF_FRAME,'GCRF')
-            %     [r1_J2K,v1_J2K] = PosVelConvert(x1(1:3)/1000,x1(4:6)/1000,strrep(cdmhead.TCA,'T',' '),'ECF2J2K','4terms');
             elseif strcmpi(cdmobj(1).REF_FRAME,'EME2000')
                 r1_J2K = x1(1:3)/1000;
                 v1_J2K = x1(4:6)/1000;
@@ -312,10 +292,6 @@ classdef (SharedTestFixtures = { ...
             % Convert Secondary Object State to Inertial Frame
             if strcmpi(cdmobj(1).REF_FRAME,'ITRF')
                 [r2_J2K,v2_J2K] = PosVelConvert(x2(1:3)/1000,x2(4:6)/1000,strrep(cdmhead.TCA,'T',' '),'ECF2J2K','4terms');
-            % % GCRF is not currently accomodated by the available coordinate frame
-            % transfor%mations
-            % elseif strcmpi(cdmobj(1).REF_FRAME,'GCRF')
-            %     [r1_J2K,v1_J2K] = PosVelConvert(x1(1:3)/1000,x1(4:6)/1000,strrep(cdmhead.TCA,'T',' '),'ECF2J2K','4terms');
             elseif strcmpi(cdmobj(1).REF_FRAME,'EME2000')
                 r2_J2K = x2(1:3)/1000;
                 v2_J2K = x2(4:6)/1000;

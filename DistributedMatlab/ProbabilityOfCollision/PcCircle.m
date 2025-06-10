@@ -7,7 +7,7 @@ function [Pc,out] = PcCircle(r1,v1,cov1,r2,v2,cov2,HBR,params)
 %
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2022-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -175,7 +175,7 @@ function [Pc,out] = PcCircle(r1,v1,cov1,r2,v2,cov2,HBR,params)
 %
 % =========================================================================
 %
-% Initial version: Jan 2022;  Latest update: Dec 2023
+% Initial version: Jan 2022;  Latest update: Mar 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -426,17 +426,19 @@ function [Pc,out] = PcCircle(r1,v1,cov1,r2,v2,cov2,HBR,params)
         xlo = xm-HBR;
         xhi = xm+HBR;
         
+        % Use Nsigma bound testing to determine cases for which GC
+        % quadrature will be sufficiently accurate
+        Nsx = 4*sx;
+        xloclip = xlo; xloclip(xlo < 0) = 0;
+        out.ClipBoundSet = ~( (xlo > -Nsx) & (xhi < xloclip+Nsx) );
+        
         % Find the cases for which Gauss-Chebyshev integration should be
         % sufficiently accurate
         if EstimationMode == 1
             % No GC cases for this estimation mode
             Iset = false(Nvec,1);
         else
-            % Use Nsigma bound testing to determine cases for which GC
-            % quadrature will be sufficiently accurate
-            Nsx = 4*sx;
-            xloclip = xlo; xloclip(xlo < 0) = 0;
-            Iset = (xlo > -Nsx) & (xhi < xloclip+Nsx);
+            Iset = ~out.ClipBoundSet;
         end
 
         % Initialize output array of Pc estimates
@@ -584,10 +586,13 @@ end
 %                                calculate eigendecompositions of primary
 %                                and secondary conjunction plane
 %                                covariances (optional, default = false)
+% D. Hall        | 03-05-2025 |  Added Nsigma bound testing to determine
+%                                cases where GC quadrature will be
+%                                sufficiently accurate.
 
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2022-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
