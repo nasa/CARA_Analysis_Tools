@@ -237,12 +237,8 @@ end
 
 %% Open CDM file
 
-% Open CDM file
-[fid, errmsg] = fopen(filename,'rt');
-% =========================================================================
 % Open file using UTF-8 native format to read CARA-produced CDMs
-% [fid, errmsg] = fopen(filename,'r','n','UTF-8');
-% =========================================================================
+[fid, errmsg] = fopen(filename,'r','n','UTF-8');
 
 if fid < 0
    fprintf('*** Error opening CDM file\n');

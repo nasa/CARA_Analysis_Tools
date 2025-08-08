@@ -1,0 +1,2 @@
+# Don't include satellite_*.txt files
+satellite_*.txt
