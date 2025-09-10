@@ -9,7 +9,7 @@ function [discosData] = GetDiscosData(discosFile, connParams, excludeBackspaceIn
 %
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -68,7 +68,7 @@ function [discosData] = GetDiscosData(discosFile, connParams, excludeBackspaceIn
 %
 % =========================================================================
 %
-% Initial version: Sep 2021;  Latest update: Nov 2023
+% Initial version: Sep 2021;  Latest update: Aug 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -290,6 +290,9 @@ function [discosData] = GetDiscosData(discosFile, connParams, excludeBackspaceIn
     % Find indexes where we should cleanup the data in case DISCOS didn't
     % provide some data for us
     removeIdx = isnan(ObjectID) | (isnan(HBR) & isnan(Mass));
+    % Find objects in reserved ranges, remove those as well
+    removeIdx = removeIdx | (ObjectID >= 70000 & ObjectID <= 99999) | ...
+        (ObjectID >= 700000000 & ObjectID <= 999999999);
     % Create a table based on the data that was read and calculated
     discosData = table(ObjectID,ObjectName,ObjectClass,ObjectShape,Width,Height,Depth,Diameter,Span,HBR,MinCrossSection,MaxCrossSection,AvgCrossSection,Mass);
     % Cleanup the data
@@ -328,10 +331,12 @@ end
 % L. Baars       | 2023-Mar-15 | Improved documentation for public release.
 %                |             | Changed the isCronJob parameter to
 %                |             | excludeBackspaceInLogOutputs.
+% L. Baars       | 2025-Aug-04 | Added a filter to remove objects within
+%                |             | reserved object ID ranges.
 
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
