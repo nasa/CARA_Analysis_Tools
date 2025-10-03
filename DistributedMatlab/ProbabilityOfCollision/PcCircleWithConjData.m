@@ -7,7 +7,7 @@ function [Pc, out] = PcCircleWithConjData(r1,v1,cov1,r2,v2,cov2,HBR,params)
 %
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -24,63 +24,61 @@ function [Pc, out] = PcCircleWithConjData(r1,v1,cov1,r2,v2,cov2,HBR,params)
 %
 % Input:
 %
-%    r1             -   Primary object's position vector in ECI       [nx3]
-%                       coordinates
-%    v1             -   Primary object's velocity vector     [nx3] or [1x3]
-%                       in ECI coordinates
-%                           Note: if r1 is [nx3] but v1 is [1x3], the same 
-%                           v1 will be used for every r1
-%    cov1           -   Primary object's         [nx9], [3x3xn], or [6x6xn]
-%                       covariance matrix in ECI coordinate frame
-%                           Note: representations are as follows:
+%    r1 - Primary object's position vector in ECI coordinates         [nx3]
 %
-%                           nx9 row vectors for n primary covariances 
-%                           represented as [(1,1) (2,1) (3,1) (1,2) (2,2) 
-%                           (3,2) (1,3) (2,3) (3,3)])
+%    v1 - Primary object's velocity vector in ECI coordinates  [nx3 or 1x3]
+%         Note: If r1 is [nx3] but v1 is [1x3], the same v1
+%               will be used for every r1
+%
+%    cov1 - Primary object's covariance matrix in    [nx9, 3x3xn, or 6x6xn]
+%           ECI coordinate frame.
+%           Note: representations are as follows:
+%
+%             nx9 row vectors for n primary covariances represented as
+%             [(1,1) (2,1) (3,1) (1,2) (2,2) (3,2) (1,3) (2,3) (3,3)])
 %                               
-%                           3x3xn matrices for n primary covariances
+%             3x3xn matrices for n primary covariances
 %
-%                           6x6xn matrices for n primary covariances
+%             6x6xn matrices for n primary covariances
 %
-%                           1x9 row vector which will be repeated for each 
-%                           primary position
+%             1x9 row vector which will be repeated for each primary
+%             position
 %
-%                           3x3 matrix which will be repeated for each 
-%                           primary position
+%             3x3 matrix which will be repeated for each primary position
 %
-%                           6x6 matrix which will be repeated for each 
-%                           primary position
-%    r2             -   Secondary object's position vector in ECI     [nx3]
-%                       coordinates
-%    v2             -   Secondary object's velocity vector   [nx3] or [1x3]
-%                       in ECI coordinates
-%                           Note: if r2 is [nx3] but v2 is [1x3], the same 
-%                           v2 will be used for every r2
-%    cov2           -   Secondary object's         [nx9], [3x3xn], or [6x6xn]
-%                       covariance matrix in ECI coordinate frame
-%                           Note: representations are as follows:
+%             6x6 matrix which will be repeated for each primary position
 %
-%                           nx9 row vectors for n secondary covariances 
-%                           represented as [(1,1) (2,1) (3,1) (1,2) (2,2) 
-%                           (3,2) (1,3) (2,3) (3,3)])
+%    r2 - Secondary object's position vector in ECI coordinates       [nx3]
+%
+%    v2 - Secondary object's velocity vector in ECI            [nx3 or 1x3]
+%         coordinates
+%         Note: If r2 is [nx3] but v2 is [1x3], the same v2
+%               will be used for every r2
+%
+%    cov2 - Secondary object's covariance matrix in  [nx9, 3x3xn, or 6x6xn]
+%           ECI coordinate frame
+%           Note: representations are as follows:
+%
+%             nx9 row vectors for n secondary covariances represented as
+%             [(1,1) (2,1) (3,1) (1,2) (2,2) (3,2) (1,3) (2,3) (3,3)])
 %                               
-%                           3x3xn matrices for n secondary covariances
+%             3x3xn matrices for n secondary covariances
 %
-%                           6x6xn matrices for n secondary covariances
+%             6x6xn matrices for n secondary covariances
 %
-%                           1x9 row vector which will be repeated for each 
-%                           secondary position
+%             1x9 row vector which will be repeated for each secondary
+%             position
 %
-%                           3x3 matrix which will be repeated for each 
-%                           secondary position
+%             3x3 matrix which will be repeated for each secondary position
 %
-%                           6x6 matrix which will be repeated for each 
-%                           secondary position
-%    HBR            -   Hard body radius                              [nx1]
-%                           Note: if the positions are given as [nx3] but 
-%                           HBR only [1x1], the same HBR will be used for 
-%                           all n cases
-%    params - (Optional) Auxilliary input parameter structrure, see
+%             6x6 matrix which will be repeated for each secondary position
+%
+%    HBR - Hard body radius                                    [1x1 or nx1]
+%          Note: If the positions are given as [nx3] but HBR
+%                only [1x1], the same HBR will be used for all
+%                n cases
+%
+%    params - (Optional) Auxilliary input parameter structure, see
 %             PcCircle.m documentation for a full description of the
 %             parameters.
 %
@@ -89,37 +87,85 @@ function [Pc, out] = PcCircleWithConjData(r1,v1,cov1,r2,v2,cov2,HBR,params)
 % Output:
 %
 %   Pc - Probability of collision
+%
 %   out - An auxilliary output structure which contains a number of extra
 %         quantities from the Pc calculation. See PcCircle.m for the
 %         nominal list of values. This calculation adds the following
 %         values.
-%     SemiMajorAxis - Larger of the sigma values of the relative miss
+%
+%     SemiMajorAxis - Larger of the sigma values of the relative miss [nx1]
 %                     distance PDF on the conjunction plane (i.e. sx)
-%     SemiMinorAxis - Smaller of the sigma values of the relative miss
-%                     distance PDF on the conjunction plane (i.e. sz)
-%     ClockAngle - Angle between the +x-axis and the semi-major axis in the
-%                  conjunction plane (deg)
-%     MissDistance - Distance between the r1 and r2 vectors
-%     x1Sigma - Mahalanobis distance when projected into the conjunction
-%               plane
-%     RadialSigma - Combined covariance uncertainty in the primary's radial
-%                   direction
-%     InTrackSigma - Combined covariance uncertainty in the primary's
+%
+%     SemiMinorAxis - Smaller of the sigma values of the relative     [nx1]
+%                     miss distance PDF on the conjunction plane
+%                     (i.e. sz)
+%
+%     ClockAngle - Angle between the +x-axis and the semi-major axis  [nx1]
+%                  in the conjunction plane (deg)
+%
+%     MissDistance - Distance between the r1 and r2 vectors           [nx1]
+%
+%     x1Sigma - Mahalanobis distance when projected into the          [nx1]
+%               conjunction plane
+%
+%     RadialSigma - Combined covariance uncertainty in the primary's  [nx1]
+%                   radial direction
+%
+%     InTrackSigma - Combined covariance uncertainty in the primary's [nx1]
 %                    in-track direction
-%     CrossTrackSigma - Combined covariance uncertainty in the primary's
-%                       cross-track direction
-%     CondNumPrimary - Condition number of the primary covariance matrix
-%     CondNumSecondary - Condition number of the secondary covariance
+%
+%     CrossTrackSigma - Combined covariance uncertainty in the        [nx1]
+%                       primary's cross-track direction
+%
+%     CondNumPrimary - Condition number of the primary covariance     [nx1]
+%                      matrix
+%
+%     CondNumSecondary - Condition number of the secondary covariance [nx1]
 %                        matrix
-%     CondNumCombined - Condition number of the combined covariance matrix
-%     CondNumProjected - Condition number of the combined covariance after
-%                        it has been projected onto the relative encounter
-%                        frame
-%     RelativePhaseAngle - Angle between the velocity vectors
+%
+%     CondNumCombined - Condition number of the combined covariance   [nx1]
+%                       matrix
+%
+%     CondNumProjected - Condition number of the combined covariance  [nx1]
+%                        after it has been projected onto the relative
+%                        encounter frame
+%
+%     RelativePhaseAngle - Angle between the velocity vectors         [nx1]
 %
 % =========================================================================
 %
-% Initial version: Dec 2023;  Latest update: Dec 2023
+% Disclaimer:
+%
+%    No Warranty: THE SUBJECT SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY
+%    WARRANTY OF ANY KIND, EITHER EXPRESSED, IMPLIED, OR STATUTORY,
+%    INCLUDING, BUT NOT LIMITED TO, ANY WARRANTY THAT THE SUBJECT SOFTWARE
+%    WILL CONFORM TO SPECIFICATIONS, ANY IMPLIED WARRANTIES OF
+%    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR FREEDOM FROM
+%    INFRINGEMENT, ANY WARRANTY THAT THE SUBJECT SOFTWARE WILL BE ERROR
+%    FREE, OR ANY WARRANTY THAT DOCUMENTATION, IF PROVIDED, WILL CONFORM TO
+%    THE SUBJECT SOFTWARE. THIS AGREEMENT DOES NOT, IN ANY MANNER,
+%    CONSTITUTE AN ENDORSEMENT BY GOVERNMENT AGENCY OR ANY PRIOR RECIPIENT
+%    OF ANY RESULTS, RESULTING DESIGNS, HARDWARE, SOFTWARE PRODUCTS OR ANY
+%    OTHER APPLICATIONS RESULTING FROM USE OF THE SUBJECT SOFTWARE.
+%    FURTHER, GOVERNMENT AGENCY DISCLAIMS ALL WARRANTIES AND LIABILITIES
+%    REGARDING THIRD-PARTY SOFTWARE, IF PRESENT IN THE ORIGINAL SOFTWARE,
+%    AND DISTRIBUTES IT "AS IS."
+%
+%    Waiver and Indemnity:  RECIPIENT AGREES TO WAIVE ANY AND ALL CLAIMS
+%    AGAINST THE UNITED STATES GOVERNMENT, ITS CONTRACTORS AND
+%    SUBCONTRACTORS, AS WELL AS ANY PRIOR RECIPIENT.  IF RECIPIENT'S USE OF
+%    THE SUBJECT SOFTWARE RESULTS IN ANY LIABILITIES, DEMANDS, DAMAGES,
+%    EXPENSES OR LOSSES ARISING FROM SUCH USE, INCLUDING ANY DAMAGES FROM
+%    PRODUCTS BASED ON, OR RESULTING FROM, RECIPIENT'S USE OF THE SUBJECT
+%    SOFTWARE, RECIPIENT SHALL INDEMNIFY AND HOLD HARMLESS THE UNITED
+%    STATES GOVERNMENT, ITS CONTRACTORS AND SUBCONTRACTORS, AS WELL AS ANY
+%    PRIOR RECIPIENT, TO THE EXTENT PERMITTED BY LAW.  RECIPIENT'S SOLE
+%    REMEDY FOR ANY SUCH MATTER SHALL BE THE IMMEDIATE, UNILATERAL
+%    TERMINATION OF THIS AGREEMENT.
+%
+% =========================================================================
+%
+% Initial version: Dec 2023;  Latest update: Aug 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -257,10 +303,11 @@ end
 % Developer      |    Date    |     Description
 % -------------------------------------------------------------------------
 % L. Baars       | 12-12-2023 |  Initial version
+% L. Baars       | 08-21-2025 |  Added disclaimer and updated documentation
 
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %

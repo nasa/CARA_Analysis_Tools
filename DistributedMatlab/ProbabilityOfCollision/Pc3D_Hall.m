@@ -3,11 +3,12 @@ function [Pc, out] = Pc3D_Hall(r1,v1,C1,r2,v2,C2,HBR,params)
 %             of collision between two satellites, given input states and
 %             covariances at the nominal time of closest approach (TCA).
 %
-% Syntax: [Pc, out] = Pc3D_Hall(r1,v1,C1,r2,v2,C2,HBR,params);
+% Syntax: [Pc, out] = Pc3D_Hall(r1,v1,C1,r2,v2,C2,HBR);
+%         [Pc, out] = Pc3D_Hall(r1,v1,C1,r2,v2,C2,HBR,params);
 %
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -50,184 +51,152 @@ function [Pc, out] = Pc3D_Hall(r1,v1,C1,r2,v2,C2,HBR,params)
 %
 % Input:
 %
-%    r1         -   Primary object's ECI position vector     [3x1] or [1x3]
-%                   (m)
-%    v1         -   Primary object's ECI velocity vector     [3x1] or [1x3]
-%                   (m/s)
-%    C1         -   Primary object's ECI covariance matrix            [6x6]
-%    r2         -   Secondary object's ECI position vector   [3x1] or [1x3]
-%                   (m)
-%    v2         -   Secondary object's ECI velocity vector   [3x1] or [1x3]
-%                   (m/s)
-%    C2         -   Secondary object's ECI covariance matrix          [6x6]  
-%    HBR        -   Combined primary+secondary hard-body radii (m)    [1x1]
+%    r1 - Primary object's ECI position vector (m)             [3x1 or 1x3]
 %
-%    params     -   Auxilliary input parameter structrure, described in
-%                   detail in function "default_params_Pc3D_Hall".
+%    v1 - Primary object's ECI velocity vector (m/s)           [3x1 or 1x3]
 %
-%                       NOTE: The "Pc3D_Hall" and  
-%                       "default_params_Pc3D_Hall" functions were designed 
-%                       to be used in default mode as schematically 
-%                       outlined below:
-%                       .
-%                       . {OTHER CODE HERE}
-%                       .
-%                       % Set up default Pc3D_Hall function parameters, 
-%                       % which only needs to be done once. This sets all 
-%                       % run parameters to default values, and calculates 
-%                       % the Lebedev unit-sphere quadrature 
-%                       % vectors+coefficients, which are also saved in the 
-%                       % parameters structure.
-%                       params = []; Lebedev_warning = false;
-%                       params = ...
-%                         default_params_Pc3D_Hall(params,Lebedev_warning);
-%                       .
-%                       . {OTHER CODE HERE}
-%                       .
-%                       % Repeatedly call Pc3D_Hall without needlessly 
-%                       % recalculating the Lebedev quadrature 
-%                       % coefficients, and getting the associated warning 
-%                       % messages.
-%                       for n=1:N
-%                         .
-%                         . {OTHER CODE HERE}
-%                         .
-%                         [Pc, out] = ...
-%                           Pc3D_Hall(r1,v1,C1,r2,v2,C2,HBR,params);
-%                         .
-%                         . {OTHER CODE HERE}
-%                         .
-%                       end
-%                       .
-%                       .
+%    C1 - Primary object's ECI covariance matrix (m position units)   [6x6]
+%
+%    r2 - Secondary object's ECI position vector (m)           [3x1 or 1x3]
+%
+%    v2 - Secondary object's ECI velocity vector (m/s)       [3x1] or [1x3]
+%
+%    C2 - Secondary object's ECI covariance matrix (m position units) [6x6]  
+%
+%    HBR - Combined primary+secondary hard-body radii.   [1x1, 1x2, or 2x1]
+%          If two elemens are passed in, it is assumed
+%          each element separately represents each
+%          object's individual HBR. In this case, the HBRs
+%          are added together to create a single unified
+%          combined HBR.
+%
+%    params - (Optional) Auxilliary input parameter structrure, described
+%             in detail in function default_params_Pc3D_Hall.m.
 %
 % =========================================================================
 %
 % Output:
 %
-%   Pc      -   The estimated conjunction-integrated Pc value (i.e., Nc 
-%               value). Pc = NaN indicates POP convergence failed at one 
-%               (or more) of the ephemeris time points.
+%   Pc - The estimated conjunction-integrated Pc value (i.e., Nc value).
+%        A NaN Pc indicates POP convergence failed at one (or more) of the
+%        ephemeris time points.
 %
-%   out     -   An auxilliary output structure which contains a large 
-%               number of quantities from the Hall (2021) 3D-Nc method 
-%               calculation, within the following fields (listed roughly in 
-%               decreasing order of importance):
+%   out - An auxilliary output structure which contains a large number of
+%         quantities from the Hall (2021) 3D-Nc method calculation, within
+%         the following fields (listed roughly in decreasing order of
+%         importance):
 %
-%                   converged = Convergence flag.
-%                   HBR = The combined primary+secondary HBR used for the 
-%                         calculation.
-%                   Nc = The estimated expected number of collisions for 
-%                        the conjunction (for converged estimates, this 
-%                        equals Pc).
-%                   Neph = Number of eph. time points created in the 
-%                          refinement process.
-%                   nrefine = Number of refinements used to find the eph. 
-%                             time points.
-%                   Tmin = Begin time of the ephemeris time points relative 
-%                          to TCA (s).
-%                   Tmax = End time of the ephemeris time points relative 
-%                          to TCA (s).
-%                   TaConj = Begin time (Ta) of effective conj. duration 
-%                            from TCA (s).
-%                   TbConj = End time (Ta) of effective conj. duration from 
-%                            TCA (s).
-%                       Note: Ta and Tb are estimated in a way to be 
-%                       comparable to a C12b duration using gamma = 1e-6.
-%                   Tmin_limit = Begin time (TA) of the encounter segment 
-%                   rel. to TCA (s).
-%                   Tmax_limit = End   time (TB) of the encounter segment 
-%                   rel. to TCA (s).
-%                   TpeakConj = Estimated time of peak collision rate rel.
-%                   to TCA (s).
-%                   Teph = Refinement ephemeris time points        [1xNeph]
-%                          relative to TCA (s).
-%                   Ncdot = Collision rate (dNc/dt) at emphemeris  [1xNeph]
-%                           times.
-%                   Nccum = Cumulative collision number at         [1xNeph]
-%                           ephemeris times.
-%                   MD2eff = Effective Maha.dist. at the eph.      [1xNeph]
-%                            times (HBR-center).
-%                   MS2eff = Effective Maha.dist. at the eph.      [1xNeph]
-%                            times (HBR-surface).
-%                   MD2min = Min MD2eff for all of the eph. times.
-%                   MS2min = Min MDSeff for all of the eph. times.
-%                   Ncmaxima = Number of Ncdot maxima found for all of the 
-%                              eph. times.
-%                   Ncminima = Number of Ncdot mimima found for all of the 
-%                              eph. times.
-%                   NcdotDurCut = Cutoff factor for Ncdot span defining eff. 
-%                                 duration.
-%                   NccumDurCut = Cutoff factor for Nccum span defining eff. 
-%                                 duration.
-%                   Ncmaxcut = Number of Ncdot maxima found above cutoff 
-%                              for times.
-%                   Xmean10 = Pos/vel state vector at initial time    [6x1]
-%                             = TCA for pri.
-%                   Pmean10 = Pos/vel covariance   at initial time    [6x1]
-%                             = TCA for pri.
-%                   Emean10 = Equinoctial element vector at initial   [6x1]
-%                             time for pri.
-%                   Jmean10 = Jacobian matrix dX(t0)/dE(t0) for pri.  [6x6]
-%                   Kmean10 = Inverse of Jmean10                      [6x6]
-%                   Qmean10 = Equinoctial covariance at initial time  [6x6]
-%                             = TCA for pri.
-%                   Xmean20 = Pos/vel state vector at initial time    [6x1]
-%                             = TCA for sec.
-%                   Pmean20 = Pos/vel covariance   at initial time    [6x1]
-%                             = TCA for sec.
-%                   Emean20 = Equinoctial element vector at initial   [6x1]
-%                             time for sec.
-%                   Jmean20 = Jacobian matrix dX(t)/dE0  at initial   [6x6]
-%                             time for sec.
-%                   Kmean20 = Inverse of Jmean20                      [6x6]
-%                   Qmean20 = Equinoctial covariance at initial       [6x6]
-%                             time = TCA for sec.
-%                   Xmean1T = Pos/vel state vectors at ephemeris   [6xNeph]
-%                             times for pri.
-%                   Jmean1T = Jacobian matrices dX(t)/dE(t0) for [6x6xNeph]
-%                   pri.
-%                   Xmean2T = Pos/vel state vectors at ephemeris   [6xNeph]
-%                             times for sec.
-%                   Jmean2T = Jacobian matrices dX(t)/dE(t0) for [6x6xNeph]
-%                             sec.
-%                   POPconv = Convergence flags for PeakOverlapPos [1xNeph]
-%                             function.
-%                   POPiter = Iteration numbers for PeakOverlapPos [1xNeph]
-%                             function.
-%                   POPfail = Failure indicators for               [1xNeph]
-%                             PeakOverlapPos function.
-%                   xs1 = Expansion-center pri. states from        [6xNeph]
-%                         PeakOverlapPos.
-%                   Js1 = Expansion-center pri. Jacobians from   [6x6xNeph]
-%                         PeakOverlapPos.
-%                   xs2 = Expansion-center sec. states from        [6xNeph]
-%                         PeakOverlapPos.
-%                   Js2 = Expansion-center sec. Jacobians from   [6x6xNeph]
-%                         PeakOverlapPos.
-%                   Ncdot_SmallHBR = Coll rate at eph. times in    [1xNeph]
-%                                    small-HBR limit.
-%                   Nccum_SmallHBR = Cum. collision number in      [1xNeph]
-%                                    small-HBR limit.
-%                   Nc_SmallHBR = Cum.coll.num. at final eph.time in 
-%                                 small-HBR limit.
-%                   period1 = Orbital period of primary (s).
-%                   period2 = Orbital period of secondary (s).
-%                   Texpand = Expansion factor used to generate the 
-%                             ephemeris.
-%                   tau0 = C12b conjunction duration begin time (for the 
-%                          specified gamma) relative to TCA.
-%                   tau1 = C12b conjunction duration end time (for the 
-%                          specified gamma) relative to TCA.
-%                   taum, dtau = The midpoint and span of the C12b 
-%                                conjunction duration.
-%                   tau0_gam1, tau1_gam1 = Conj. duration bounds for gamma 
-%                                          = 1 relative to TCA.
-%                   covXcorr_corrections_applied = true if covariance cross 
-%                                                  correlation corrections 
-%                                                  were applied
-%                   params = A copy of the parameters structure used for 
-%                            the calculation.
+%     converged = Convergence flag.
+%
+%     HBR = The combined primary+secondary HBR used for the calculation.
+%
+%     Nc = The estimated expected number of collisions for the conjunction
+%          (for converged estimates, this equals Pc).
+%
+%     Neph = Number of eph. time points created in the refinement process.
+%
+%     nrefine = Number of refinements used to find the eph. time points.
+%
+%     Tmin = Begin time of the ephemeris time points relative to TCA (s).
+%
+%     Tmax = End time of the ephemeris time points relative to TCA (s).
+%
+%     TaConj = Begin time (Ta) of effective conj. duration from TCA (s).
+%
+%     TbConj = End time (Ta) of effective conj. duration from TCA (s).
+%              Note: Ta and Tb are estimated in a way to be comparable to a
+%                    C12b duration using gamma = 1e-6.
+%
+%     Tmin_limit = Begin time (TA) of the encounter segment rel. to TCA (s)
+%
+%     Tmax_limit = End time (TB) of the encounter segment rel. to TCA (s).
+%
+%     TpeakConj = Estimated time of peak collision rate rel. to TCA (s).
+%
+%     Teph = Refinement ephemeris time points relative to TCA (s). [1xNeph]
+%
+%     Ncdot = Collision rate (dNc/dt) at ephemeris times.          [1xNeph]
+%
+%     Nccum = Cumulative collision number at ephemeris times.      [1xNeph]
+%
+%     MD2eff = Effective Maha.dist. at the eph. times (HBR-center) [1xNeph]
+%
+%     MS2eff = Effective Maha.dist. at the eph. times              [1xNeph]
+%              (HBR-surface).
+%
+%     MD2min = Min MD2eff for all of the eph. times.
+%
+%     MS2min = Min MDSeff for all of the eph. times.
+%
+%     Ncmaxima = Number of Ncdot maxima found for all of the eph. times.
+%
+%     Ncminima = Number of Ncdot mimima found for all of the eph. times.
+%
+%     NcdotDurCut = Cutoff factor for Ncdot span defining eff. duration.
+%
+%     NccumDurCut = Cutoff factor for Nccum span defining eff. duration.
+%
+%     Ncmaxcut = Number of Ncdot maxima found above cutoff for times.
+%
+%     Xmean10/Xmean20 = Pos/vel state vector at initial time (TCA)    [6x1]
+%                       for pri/sec
+%
+%     Pmean10/Pmean20 = Pos/vel covariance at initial time (TCA) for  [6x1]
+%                       pri/sec
+%
+%     Emean10/Emean20 = Equinoctial element vector at initial time    [6x1]
+%                       for pri/sec
+%
+%     Jmean10/Jmean20 = Jacobian matrix dX(t0)/dE(t0) for pri/sec     [6x6]
+%
+%     Kmean10/Kmean20 = Inverse of Jmean10/Jmean20                    [6x6]
+%
+%     Qmean10/Qmean20 = Equinoctial covariance at initial time (TCA)  [6x6]
+%                       for pri/sec
+%
+%     Xmean1T/Xmean2T = Pos/vel state vectors at ephemeris times   [6xNeph]
+%                       for pri/sec
+%
+%     Jmean1T/Jmean2T = Jacobian matrices dX(t)/dE(t0) for       [6x6xNeph]
+%                       pri/sec
+%
+%     POPconv = Convergence flags for PeakOverlapPos function.     [1xNeph]
+%
+%     POPiter = Iteration numbers for PeakOverlapPos function.     [1xNeph]
+%
+%     POPfail = Failure indicators for PeakOverlapPos function.    [1xNeph]
+%
+%     xs1/xs2 = Expansion-center pri/sec states from               [6xNeph]
+%               PeakOverlapPos.
+%
+%     Js1/Js2 = Expansion-center pri/sec Jacobians from          [6x6xNeph]
+%               PeakOverlapPos.
+%
+%     Ncdot_SmallHBR = Coll rate at eph. times in small-HBR limit. [1xNeph]
+%
+%     Nccum_SmallHBR = Cum. collision number in small-HBR limit.   [1xNeph]
+%
+%     Nc_SmallHBR = Cum.coll.num. at final eph.time in small-HBR limit.
+%
+%     period1/period2 = Orbital period of primary/secondary (s).
+%
+%     Texpand = Expansion factor used to generate the ephemeris.
+%
+%     tau0 = C12b conjunction duration begin time (for the specified gamma)
+%            relative to TCA.
+%
+%     tau1 = C12b conjunction duration end time (for the specified gamma)
+%            relative to TCA.
+%
+%     taum, dtau = The midpoint and span of the C12b conjunction duration.
+%
+%     tau0_gam1, tau1_gam1 = Conj. duration bounds for gamma = 1 relative
+%                            to TCA.
+%
+%     covXcorr_corrections_applied = true if covariance cross correlation
+%                                    corrections were applied
+%
+%     params = A copy of the parameters structure used for the calculation.
 %
 % =========================================================================
 % 
@@ -281,10 +250,42 @@ function [Pc, out] = Pc3D_Hall(r1,v1,C1,r2,v2,C2,HBR,params)
 %
 %  Ncdot_integrand
 %  Ncdot_quad2D_integrand
+%  add_eph_times
 %
 % =========================================================================
 %
-% Initial version: Jan 2020;  Latest update: Mar 2024
+% Disclaimer:
+%
+%    No Warranty: THE SUBJECT SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY
+%    WARRANTY OF ANY KIND, EITHER EXPRESSED, IMPLIED, OR STATUTORY,
+%    INCLUDING, BUT NOT LIMITED TO, ANY WARRANTY THAT THE SUBJECT SOFTWARE
+%    WILL CONFORM TO SPECIFICATIONS, ANY IMPLIED WARRANTIES OF
+%    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR FREEDOM FROM
+%    INFRINGEMENT, ANY WARRANTY THAT THE SUBJECT SOFTWARE WILL BE ERROR
+%    FREE, OR ANY WARRANTY THAT DOCUMENTATION, IF PROVIDED, WILL CONFORM TO
+%    THE SUBJECT SOFTWARE. THIS AGREEMENT DOES NOT, IN ANY MANNER,
+%    CONSTITUTE AN ENDORSEMENT BY GOVERNMENT AGENCY OR ANY PRIOR RECIPIENT
+%    OF ANY RESULTS, RESULTING DESIGNS, HARDWARE, SOFTWARE PRODUCTS OR ANY
+%    OTHER APPLICATIONS RESULTING FROM USE OF THE SUBJECT SOFTWARE.
+%    FURTHER, GOVERNMENT AGENCY DISCLAIMS ALL WARRANTIES AND LIABILITIES
+%    REGARDING THIRD-PARTY SOFTWARE, IF PRESENT IN THE ORIGINAL SOFTWARE,
+%    AND DISTRIBUTES IT "AS IS."
+%
+%    Waiver and Indemnity:  RECIPIENT AGREES TO WAIVE ANY AND ALL CLAIMS
+%    AGAINST THE UNITED STATES GOVERNMENT, ITS CONTRACTORS AND
+%    SUBCONTRACTORS, AS WELL AS ANY PRIOR RECIPIENT.  IF RECIPIENT'S USE OF
+%    THE SUBJECT SOFTWARE RESULTS IN ANY LIABILITIES, DEMANDS, DAMAGES,
+%    EXPENSES OR LOSSES ARISING FROM SUCH USE, INCLUDING ANY DAMAGES FROM
+%    PRODUCTS BASED ON, OR RESULTING FROM, RECIPIENT'S USE OF THE SUBJECT
+%    SOFTWARE, RECIPIENT SHALL INDEMNIFY AND HOLD HARMLESS THE UNITED
+%    STATES GOVERNMENT, ITS CONTRACTORS AND SUBCONTRACTORS, AS WELL AS ANY
+%    PRIOR RECIPIENT, TO THE EXTENT PERMITTED BY LAW.  RECIPIENT'S SOLE
+%    REMEDY FOR ANY SUCH MATTER SHALL BE THE IMMEDIATE, UNILATERAL
+%    TERMINATION OF THIS AGREEMENT.
+%
+% =========================================================================
+%
+% Initial version: Jan 2020;  Latest update: Aug 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -2054,10 +2055,12 @@ end
 %                                incorrectly calculated using the small-HBR
 %                                limit collision rate curve, rather than
 %                                the actual curve.
+% L. Baars       | 08-20-2024  | Added disclaimer and updated copyright
+%                                dates.
 
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %

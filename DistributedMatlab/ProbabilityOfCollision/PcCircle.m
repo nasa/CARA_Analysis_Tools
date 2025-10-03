@@ -37,66 +37,65 @@ function [Pc,out] = PcCircle(r1,v1,cov1,r2,v2,cov2,HBR,params)
 %
 % Input:
 %
-%    r1             -   Primary object's position vector in ECI       [nx3]
-%                       coordinates
-%    v1             -   Primary object's velocity vector     [nx3] or [1x3]
-%                       in ECI coordinates
-%                           Note: if r1 is [nx3] but v1 is [1x3], the same 
-%                           v1 will be used for every r1
-%    cov1           -   Primary object's         [nx9], [3x3xn], or [6x6xn]
-%                       covariance matrix in ECI coordinate frame
-%                           Note: representations are as follows:
+%    r1 - Primary object's position vector in ECI coordinates         [nx3]
 %
-%                           nx9 row vectors for n primary covariances 
-%                           represented as [(1,1) (2,1) (3,1) (1,2) (2,2) 
-%                           (3,2) (1,3) (2,3) (3,3)])
+%    v1 - Primary object's velocity vector in ECI coordinates  [nx3 or 1x3]
+%         Note: If r1 is [nx3] but v1 is [1x3], the same v1
+%               will be used for every r1
+%
+%    cov1 - Primary object's covariance matrix in    [nx9, 3x3xn, or 6x6xn]
+%           ECI coordinate frame.
+%           Note: representations are as follows:
+%
+%             nx9 row vectors for n primary covariances represented as
+%             [(1,1) (2,1) (3,1) (1,2) (2,2) (3,2) (1,3) (2,3) (3,3)])
 %                               
-%                           3x3xn matrices for n primary covariances
+%             3x3xn matrices for n primary covariances
 %
-%                           6x6xn matrices for n primary covariances
+%             6x6xn matrices for n primary covariances
 %
-%                           1x9 row vector which will be repeated for each 
-%                           primary position
+%             1x9 row vector which will be repeated for each primary
+%             position
 %
-%                           3x3 matrix which will be repeated for each 
-%                           primary position
+%             3x3 matrix which will be repeated for each primary position
 %
-%                           6x6 matrix which will be repeated for each 
-%                           primary position
-%    r2             -   Secondary object's position vector in ECI     [nx3]
-%                       coordinates
-%    v2             -   Secondary object's velocity vector   [nx3] or [1x3]
-%                       in ECI coordinates
-%                           Note: if r2 is [nx3] but v2 is [1x3], the same 
-%                           v2 will be used for every r2
-%    cov2           -   Secondary object's         [nx9], [3x3xn], or [6x6xn]
-%                       covariance matrix in ECI coordinate frame
-%                           Note: representations are as follows:
+%             6x6 matrix which will be repeated for each primary position
 %
-%                           nx9 row vectors for n secondary covariances 
-%                           represented as [(1,1) (2,1) (3,1) (1,2) (2,2) 
-%                           (3,2) (1,3) (2,3) (3,3)])
+%    r2 - Secondary object's position vector in ECI coordinates       [nx3]
+%
+%    v2 - Secondary object's velocity vector in ECI            [nx3 or 1x3]
+%         coordinates
+%         Note: If r2 is [nx3] but v2 is [1x3], the same v2
+%               will be used for every r2
+%
+%    cov2 - Secondary object's covariance matrix in  [nx9, 3x3xn, or 6x6xn]
+%           ECI coordinate frame
+%           Note: representations are as follows:
+%
+%             nx9 row vectors for n secondary covariances represented as
+%             [(1,1) (2,1) (3,1) (1,2) (2,2) (3,2) (1,3) (2,3) (3,3)])
 %                               
-%                           3x3xn matrices for n secondary covariances
+%             3x3xn matrices for n secondary covariances
 %
-%                           6x6xn matrices for n secondary covariances
+%             6x6xn matrices for n secondary covariances
 %
-%                           1x9 row vector which will be repeated for each 
-%                           secondary position
+%             1x9 row vector which will be repeated for each secondary
+%             position
 %
-%                           3x3 matrix which will be repeated for each 
-%                           secondary position
+%             3x3 matrix which will be repeated for each secondary position
 %
-%                           6x6 matrix which will be repeated for each 
-%                           secondary position
-%    HBR            -   Hard body radius                              [nx1]
-%                           Note: if the positions are given as [nx3] but 
-%                           HBR only [1x1], the same HBR will be used for 
-%                           all n cases
-%    params - (Optional) Auxilliary input parameter structrure with the
-%                        following fields:
-%      EstimationMode - Specificies the method of estimating Pc and 
-%                       peforming the required numberical interations
+%             6x6 matrix which will be repeated for each secondary position
+%
+%    HBR - Hard body radius                                    [1x1 or nx1]
+%          Note: If the positions are given as [nx3] but HBR
+%                only [1x1], the same HBR will be used for all
+%                n cases
+%
+%    params - (Optional) Auxilliary input parameter structure with the
+%             following fields:
+%
+%      EstimationMode - Specifies the method of estimating Pc and 
+%                       peforming the required numerical integrations
 %                       (optional, default = 64):
 %                           -1 = Circumscribing square upper bound, which 
 %                           is a very fast calculation mode requiring no 
@@ -130,27 +129,76 @@ function [Pc,out] = PcCircle(r1,v1,cov1,r2,v2,cov2,HBR,params)
 %                       0 = Warning messages are suppressed
 %                       positive integer = Warning messages are displayed
 %
+%      PriSecCovProcessing - Enables the calculation of individual
+%                            covariance auxiliary outputs projected onto
+%                            the conjunction plane. These outputs can be
+%                            used to plot primary and secondary ellipses on
+%                            CA distribution plots.
+%                            (optional, default = false)
+%
 % =========================================================================
 %
 % Output:
 %
 %   Pc - Probability of collision
+%
 %   out - An auxilliary output structure which contains a number of extra
 %         quantities from the Pc calculation. Includes the following
 %         fields:
+%
 %     IsPosDef - Flag indicating if the combined and marginalized     [nx1]
 %                covariance has a negative eigenvalue
+%
 %     IsRemediated - Flag indicating if the combined and marginalized [nx1]
 %                    marginalized 2x2 covariance was remediated,
-%                     either successfully or not
+%                    either successfully or not
+%
 %     Amat - Combined covariance projected onto the nominal           [nx3]
 %            conjunction plane
+%
 %     (xm,zm) - Position of the mean relative miss distance on the    [nx1]
 %               conjunction plane
+%
 %     (sx,sz) - Sigma values of the relative miss distance PDF on the [nx1]
 %               conjunction plane
+%
 %     r1,v1,cov1,r2,v2,cov2,HBR - Adjusted input parameters saved off for
 %                                 use in other functions
+%
+%     xhat,yhat,zhat - Component vectors of the relative encounter    [nx3]
+%                      frame.
+%
+%     EigV1,EigV2 - Eigenvectors of the combined covariance projected [nx2]
+%                   onto the conjunction plane.
+%
+%     EigL1,EigL2 - Eigenvalues of the combined covariance projected  [nx1]
+%                   onto the conjunction plane.
+%
+%     ClipBoundSet - Boolean indicating conjunctions where GC         [nx1]
+%                    quadrature is not sufficiently accurate and
+%                    Matlab's integral function was attempted instead.
+%
+%     The following set of out structure fields are only populated if the
+%     params.PriSecCovProcessing parameter is set to true:
+%
+%       AmatPri/Sec - 2x2 pri/sec covariance matrix projected onto    [nx3]
+%                     conjunction plane:
+%                       Amat(:,1) is the 1,1 component of the cov matrix
+%                       Amat(:,2) is the 1,2 or 2,1 component of the cov
+%                         matrix
+%                       Amat(:,3) is the 2,2 component of the cov matrix
+%
+%       EigV1Pri,EigV2Pri - Eigenvectors of the primary covariance    [nx2]
+%                           projected onto the conjunction plane.
+%
+%       EigV1Sec,EigV2Sec - Eigenvectors of the secondary covariance  [nx2]
+%                           projected onto the conjunction plane.
+%
+%       EigL1Pri,EigL2Pri - Eigenvalues of the primary covariance     [nx1]
+%                           projected onto the conjunctoin plane.
+%
+%       EigL1Sec,EigL2Sec - Eigenvalues of the secondary covariance   [nx1]
+%                           projected onto the conjunctoin plane.
 %
 % =========================================================================
 %
@@ -175,7 +223,38 @@ function [Pc,out] = PcCircle(r1,v1,cov1,r2,v2,cov2,HBR,params)
 %
 % =========================================================================
 %
-% Initial version: Jan 2022;  Latest update: Mar 2025
+% Disclaimer:
+%
+%    No Warranty: THE SUBJECT SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY
+%    WARRANTY OF ANY KIND, EITHER EXPRESSED, IMPLIED, OR STATUTORY,
+%    INCLUDING, BUT NOT LIMITED TO, ANY WARRANTY THAT THE SUBJECT SOFTWARE
+%    WILL CONFORM TO SPECIFICATIONS, ANY IMPLIED WARRANTIES OF
+%    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR FREEDOM FROM
+%    INFRINGEMENT, ANY WARRANTY THAT THE SUBJECT SOFTWARE WILL BE ERROR
+%    FREE, OR ANY WARRANTY THAT DOCUMENTATION, IF PROVIDED, WILL CONFORM TO
+%    THE SUBJECT SOFTWARE. THIS AGREEMENT DOES NOT, IN ANY MANNER,
+%    CONSTITUTE AN ENDORSEMENT BY GOVERNMENT AGENCY OR ANY PRIOR RECIPIENT
+%    OF ANY RESULTS, RESULTING DESIGNS, HARDWARE, SOFTWARE PRODUCTS OR ANY
+%    OTHER APPLICATIONS RESULTING FROM USE OF THE SUBJECT SOFTWARE.
+%    FURTHER, GOVERNMENT AGENCY DISCLAIMS ALL WARRANTIES AND LIABILITIES
+%    REGARDING THIRD-PARTY SOFTWARE, IF PRESENT IN THE ORIGINAL SOFTWARE,
+%    AND DISTRIBUTES IT "AS IS."
+%
+%    Waiver and Indemnity:  RECIPIENT AGREES TO WAIVE ANY AND ALL CLAIMS
+%    AGAINST THE UNITED STATES GOVERNMENT, ITS CONTRACTORS AND
+%    SUBCONTRACTORS, AS WELL AS ANY PRIOR RECIPIENT.  IF RECIPIENT'S USE OF
+%    THE SUBJECT SOFTWARE RESULTS IN ANY LIABILITIES, DEMANDS, DAMAGES,
+%    EXPENSES OR LOSSES ARISING FROM SUCH USE, INCLUDING ANY DAMAGES FROM
+%    PRODUCTS BASED ON, OR RESULTING FROM, RECIPIENT'S USE OF THE SUBJECT
+%    SOFTWARE, RECIPIENT SHALL INDEMNIFY AND HOLD HARMLESS THE UNITED
+%    STATES GOVERNMENT, ITS CONTRACTORS AND SUBCONTRACTORS, AS WELL AS ANY
+%    PRIOR RECIPIENT, TO THE EXTENT PERMITTED BY LAW.  RECIPIENT'S SOLE
+%    REMEDY FOR ANY SUCH MATTER SHALL BE THE IMMEDIATE, UNILATERAL
+%    TERMINATION OF THIS AGREEMENT.
+%
+% =========================================================================
+%
+% Initial version: Jan 2022;  Latest update: Aug 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -589,6 +668,8 @@ end
 % D. Hall        | 03-05-2025 |  Added Nsigma bound testing to determine
 %                                cases where GC quadrature will be
 %                                sufficiently accurate.
+% L. Baars       | 08-21-2025 |  Added disclaimer notice and updated
+%                                documentation.
 
 % =========================================================================
 %

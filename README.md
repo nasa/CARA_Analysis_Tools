@@ -1,6 +1,6 @@
 # CARA Analysis Tools
 
-This Software Development Kit (SDK) provides a set of tools and utilities that have been developed by NASA's Conjunction Assessment Risk Analysis (CARA) team. These tools and data products are designed to help users assess the risk of close approach events between Earth-orbiting satellites. This software is provided to the public under a NASA Open Source Software Agreement (see the `NOSA_GSC-18593-1.pdf` file to view the agreement).
+This Software Development Kit (SDK) provides a set of tools and utilities that have been developed by NASA's Conjunction Assessment Risk Analysis (CARA) team. These tools and data products are designed to help users assess the risk of close approach events between Earth-orbiting satellites. This software is provided to the public under several NASA Open Source Software Agreements (see the `NOSA_GSC-18593-1.pdf`, `NOSA_GSC-18848-1.pdf`, and `NOSA_GSC-19374-1.pdf` files to view the agreements).
 
 ## Directory/File Structure
 
@@ -9,7 +9,7 @@ The following directories and files will be found at the top level of the SDK:
 - `DataFiles` - Contains common static data that are used by one or more tools in the SDK baseline. This data may be used by unit tests or by the tools themselves.
 - `DistributedMatlab` - Contains Matlab code and tools that are available for public release. See the `README.md` file within the `DistributedMatlab` directory for a more comprehensive description of the tools provided.
 - `References` - Contains reference documents which provide the theoretical basis for many of the tools provided in the SDK.
-- `NOSA_GSC-18593-1.pdf` - NASA Open Source License Agreement.
+- `NOSA_GSC-18593-1.pdf`, `NOSA_GSC-18848-1.pdf`, and `NOSA_GSC-19374-1.pdf` - NASA Open Source License Agreements.
 - `README.md` - Help document describing the SDK.
 
 ## Help Documentation

@@ -18,7 +18,7 @@ function [conv,rpk,v1pk,v2pk,aux] = PeakOverlapPos(t,xb1,Jb1,t01,Eb01,Qb01,xb2,J
 % series approximation of the motion, as outlined by Hall (2021).
 %
 % This version of the algorithm iteratively estimates the POP, starting
-% with primary and sectiondary expansion-center CoL points located at the
+% with primary and secondary expansion-center CoL points located at the
 % nominal mean position. The new CoL estimates are adjsted at each
 % iteration to prevent large orbital energy changes, which stabilizes the
 % iterative process by preventing overshooting of the POP estimate.

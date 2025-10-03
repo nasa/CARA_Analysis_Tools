@@ -11,7 +11,7 @@ classdef (SharedTestFixtures = { ...
 %
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -23,7 +23,7 @@ classdef (SharedTestFixtures = { ...
 %
 % =========================================================================
 %
-% Initial version: Dec 2019;  Latest update: Aug 2023
+% Initial version: Dec 2019;  Latest update: Jul 2024
 %
 % ----------------- BEGIN CODE -----------------
     
@@ -322,7 +322,7 @@ end
 
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %

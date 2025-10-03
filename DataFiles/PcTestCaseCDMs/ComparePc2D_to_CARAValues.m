@@ -28,12 +28,12 @@ function [compareData] = ComparePc2D_to_CARAValues()
 %
 % Generally, 'VeryTight' and 'Exact' match values are the preferred
 % outputs. These values represent comparisons that are within machine
-% precision. However, a 'Tight' match value may be acceptable, depending on
-% the hardware architecture, Matlab version, and operating system being
-% used. Even a 'Loose' comparison will generally provide a Pc value with
-% enough precision for a valid risk assessment determination. However, it
-% is worth the effort to look for errors within your implementation if you
-% get 'Loose' (or worse) comparisons.
+% precision. However, 'Tight' and 'Loose' match value are acceptable,
+% depending on the hardware architecture, Matlab version, and operating
+% system being used. Even a 'VeryLoose' comparison will generally provide a
+% Pc value with enough precision for a valid risk assessment determination.
+% However, 'NoMatch' values indicate Pc comparison errors that are not
+% acceptable.
 %
 % In addition to the locally computed Pc, a locally computed Pc without TCA
 % adjustment is also provided as the last column of the output table. The
@@ -41,10 +41,6 @@ function [compareData] = ComparePc2D_to_CARAValues()
 % and 'CARA 2DPc' values. Please see the Pc2D_FromCDM.m file for a full
 % explanation on the TCA adjustment which is required for 2D-Pc
 % calculations.
-%
-% Note: This function uses Matlab's 'isapprox' function, which was
-%       introduced in Matlab R2024b. Therefore this function requires
-%       Matlab R2024b or later!
 %
 % =========================================================================
 %
@@ -102,7 +98,7 @@ function [compareData] = ComparePc2D_to_CARAValues()
         while ~matchFound && j < length(toleranceLevels)
             j = j + 1;
             if j < length(toleranceLevels)
-                matchFound = isapprox(local2DPc(i), cara2DPc(i), toleranceLevels{j});
+                matchFound = isclose(local2DPc(i), cara2DPc(i), toleranceLevels{j});
             end
         end
         compareTolerance{i} = toleranceLevels{j};
@@ -112,7 +108,7 @@ function [compareData] = ComparePc2D_to_CARAValues()
         while ~matchFound && j < length(toleranceLevels)
             j = j + 1;
             if j < length(toleranceLevels)
-                matchFound = isapprox(pcNoAdj(i), cara2DPc(i), toleranceLevels{j});
+                matchFound = isclose(pcNoAdj(i), cara2DPc(i), toleranceLevels{j});
             end
         end
         noAdjTol{i} = toleranceLevels{j};
@@ -150,6 +146,7 @@ end
 %--------------------------------------------------
 % L. Baars       | 07-02-2025 | Initial Development
 % L. Baars       | 07-11-2025 | Minor fix to while loop logic
+% L. Baars       | 09-16-2025 | Changed isapprox call to isclose.
 
 % =========================================================================
 %

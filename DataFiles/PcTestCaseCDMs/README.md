@@ -1,13 +1,14 @@
 # Testing Information
-The `CARA_PcMethod_Test_Conjunctions.xlsx` file contains the results of running various probability of collision (Pc) Methods (Pc2D, Nc2D, Nc3D, and PcSDMC) against the CDMs provided in this directory. The methods map to actual Matlab functions as follows:
-| Method | Matlab Function | Released |
-| ------ | --------------- | -------- |
-| Pc2D   | PcCircle.m      | Yes      |
-| Nc2D   | Pc2D_Hall.m     | No       |
-| Nc3D   | Pc3D_Hall.m     | Yes      |
-| PcSDMC | Pc_SDMC.m       | No       |
+The `CARA_PcMethod_Test_Conjunctions.xlsx` file contains the results of running various probability of collision (Pc) Methods (Pc2D, Nc2D, Nc3D, and SDMCPc) against the CDMs provided in this directory. The methods map to actual Matlab functions as follows:
+| Method     | Matlab Function | Released                     |
+| ---------- | --------------- | ---------------------------- |
+| Pc2D_NoAdj | PcCircle.m      | Yes                          |
+| Pc2D       | PcCircle.m      | Yes                          |
+| Nc2D       | Pc2D_Hall.m     | Yes                          |
+| Nc3D       | Pc3D_Hall.m     | Yes                          |
+| SDMCPc     | Pc_SDMC.m       | Yes (Windows and Linux only) |
 
-Some of the methods have been approved for public release and are available in the `DistributedMatlab/ProbabilityOfCollision` folder. The other methods are going through the NASA public release process and will be released at a future date.
+As of October 2025, all of the methods have been approved for public release and are available in the `DistributedMatlab/ProbabilityOfCollision` folder.
 
 We have found that Matlab outputs can differ based on the Matlab version being used, the AVX Math Kernel Library (MKL) flags used, and the Operating System used. It is important to be aware of all of these parameters when comparing values.
 
@@ -35,12 +36,15 @@ Be advised that differences in the settings listed above will likely cause Pc ca
 
 The accurate calculation of the Pc from CDM files requires a careful setup of the parameters provided within the CDM file. However, a direct read and calculation of Pc of the data within the CDM (including needed frame conversions) isn't the whole story since the time of closest approach (TCA) provided within the file is adjusted to the closest millisecond. The actual TCA of events does not conventiently line up with this millisecond boundary; therefore the states provided within a CDM need to be adjusted to match the actual TCA of the event.
 
-Admittedly, the calculation of the Pc from a CDM file can seem a little convoluted. While this repository has provided the functions necessary to calculate a Pc from the CDM file, it did not provide a step-by-step set of instructions on how to properly perform this calculation...until now. Two scripts have been provided as examples for calculating and comparing Pc values:
+Admittedly, the calculation of the Pc from a CDM file can seem a little convoluted. While this repository has provided the functions necessary to calculate a Pc from the CDM file, it did not provide a step-by-step set of instructions on how to properly perform this calculation...until now. Several scripts have been provided as examples for calculating and comparing Pc values:
 
-| Script Name                   | Script Description |
-| ----------------------------- | ------------------ |
-| `Pc2D_FromCDM.m`              | Provides an example of how to read a CDM file, perform necessary frame conversions, adjust states to TCA, and calculate the Pc value. |
-| `ComparePc2D_to_CARAValues.m` | Provides an example of how to compare locally computed Pc values against CARA Pc values. In addition, includes Pc values obtained without the TCA adjustment. |
+| Script Name                          | Script Description |
+| ------------------------------------ | ------------------ |
+| `Pc2D_FromCDM.m`                     | Provides an example of how to read a CDM file, adjust states to TCA, and calculate the Pc value. |
+| `PcMultiStep_FromCDM.m`              | Provides an example of how to read a CDM file, and calculate the Pc value. Note that adjusting TCA states are not needed since PcMultiStep already automatically does this. |
+| `ComparePc2D_to_CARAValues.m`        | Provides an example of how to compare locally computed 2D-Pc values against CARA 2D-Pc values. In addition, includes Pc values obtained without the TCA adjustment. |
+| `ComparePcMultiStep_to_CARAValues.m` | Provides an example of how to compare locally computed Pc values (Pc2D, Nc2D, Nc3D, or SDMCPc). |
+| `GeneratePcMethodPcData.m`           | Provides an example of how the Pc values (and some associated data) were computed to generate `CARA_PcMethod_Test_Conjunctions.xlsx`. |
 
 Please review the embedded documentation within the scripts for more details.
 
@@ -50,3 +54,4 @@ Please review the embedded documentation within the scripts for more details.
 | --------- | ----------- | ----------- |
 | L. Baars  | 04/29/2025  | Initial version, added new README.md |
 | L. Baars  | 07/03/2025  | Revised some wording in the 'Testing Information' section and added info for Mac Silicon users. Added new section on calculating Pc Values from CDM Files. |
+| L. Baars  | 09/04/2025  | Added information for the PcMultiStep release. |

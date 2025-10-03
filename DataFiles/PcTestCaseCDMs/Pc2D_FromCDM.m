@@ -56,7 +56,7 @@ function [Pc, PcNoAdj] = Pc2D_FromCDM(cdmFilename,HBR_m)
 %
 % =========================================================================
 %
-% Initial version: Jul 2025;  Latest update: Jul 2025
+% Initial version: Jul 2025;  Latest update: Sep 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -73,33 +73,19 @@ function [Pc, PcNoAdj] = Pc2D_FromCDM(cdmFilename,HBR_m)
     persistent pathsAdded
     if isempty(pathsAdded)
         [p,~,~] = fileparts(mfilename('fullpath'));
-        s = what(fullfile(p,'../../DistributedMatlab/Utils/CDMAnalysis')); addpath(s.path); 
-        s = what(fullfile(p,'../../DistributedMatlab/Utils/CovarianceTransformations')); addpath(s.path);
-        s = what(fullfile(p,'../../DistributedMatlab/Utils/PosVelTransformations')); addpath(s.path);
+        s = what(fullfile(p,'../../DistributedMatlab/Utils/CDMAnalysis')); addpath(s.path);
         s = what(fullfile(p,'../../DistributedMatlab/ProbabilityOfCollision')); addpath(s.path);
         s = what(fullfile(p,'../../DistributedMatlab/ProbabilityOfCollision/Utils')); addpath(s.path);
         pathsAdded = true;
     end
 
-    % Check for file existence and read in the CDM file
-    if ~exist(cdmFilename,'file')
-        error(['Could not find CDM file: ' cdmFilename]);
-    end
-    [cdmhead,cdmobj,status] = read_cdm(cdmFilename);
-    if status ~= 0
-        error(['Error reading CDM file: ' cdmFilename]);
-    end
-
     % Get conjunction parameters from the CDM file
-    [r1, v1] = GetJ2KPosVel(cdmhead, cdmobj, 1);
-    [r2, v2] = GetJ2KPosVel(cdmhead, cdmobj, 2);
-    C1 = GetJ2KCovariance(r1, v1, cdmobj, 1);
-    C2 = GetJ2KCovariance(r2, v2, cdmobj, 2);
+    [r1, v1, C1, r2, v2, C2, cdmHBR] = ConjDecoder(cdmFilename);
     if isnan(HBR_m)
-        if ~isfield(cdmhead,'HBR')
+        if isnan(cdmHBR)
             error('HBR_m parameter is required when no HBR is provided in the CDM file!');
         end
-        HBR = cdmhead.HBR;
+        HBR = cdmHBR;
     else
         HBR = HBR_m;
     end
@@ -120,27 +106,6 @@ function [Pc, PcNoAdj] = Pc2D_FromCDM(cdmFilename,HBR_m)
     Pc = PcCircle(r1,v1,C1,r2,v2,C2,HBR);
 end
 
-function [r, v] = GetJ2KPosVel(cdmhead, cdmobj, idx)
-    r = [cdmobj(idx).X     cdmobj(idx).Y     cdmobj(idx).Z    ] * 1e3;
-    v = [cdmobj(idx).X_DOT cdmobj(idx).Y_DOT cdmobj(idx).Z_DOT] * 1e3;
-    if strcmp(cdmobj(idx).REF_FRAME,'ITRF')
-        TCA = strrep(cdmhead.TCA,'T',' ');
-        [r, v] = PosVelConvert(r, v, TCA, 'ECF2J2K', '4terms');
-    elseif ~strcmp(cdmobj(idx).REF_FRAME,'EME2000')
-        error(['Invalid reference frame for object ' num2str(idx) ' (' cdmobj(idx).REF_FRAME '), supported values are ''EME2000'' and ''ITRF''']);
-    end
-end
-
-function [C] = GetJ2KCovariance(r, v, cdmobj, idx)
-    C_RIC = [   cdmobj(idx).CR_R     cdmobj(idx).CT_R     cdmobj(idx).CN_R     cdmobj(idx).CRDOT_R     cdmobj(idx).CTDOT_R     cdmobj(idx).CNDOT_R
-                cdmobj(idx).CT_R     cdmobj(idx).CT_T     cdmobj(idx).CN_T     cdmobj(idx).CRDOT_T     cdmobj(idx).CTDOT_T     cdmobj(idx).CNDOT_T
-                cdmobj(idx).CN_R     cdmobj(idx).CN_T     cdmobj(idx).CN_N     cdmobj(idx).CRDOT_N     cdmobj(idx).CTDOT_N     cdmobj(idx).CNDOT_N
-             cdmobj(idx).CRDOT_R  cdmobj(idx).CRDOT_T  cdmobj(idx).CRDOT_N  cdmobj(idx).CRDOT_RDOT  cdmobj(idx).CTDOT_RDOT  cdmobj(idx).CNDOT_RDOT
-             cdmobj(idx).CTDOT_R  cdmobj(idx).CTDOT_T  cdmobj(idx).CTDOT_N  cdmobj(idx).CTDOT_RDOT  cdmobj(idx).CTDOT_TDOT  cdmobj(idx).CNDOT_TDOT
-             cdmobj(idx).CNDOT_R  cdmobj(idx).CNDOT_T  cdmobj(idx).CNDOT_N  cdmobj(idx).CNDOT_RDOT  cdmobj(idx).CNDOT_TDOT  cdmobj(idx).CNDOT_NDOT];
-    C = RIC2ECI(C_RIC,r,v);
-end
-
 % ----------------- END OF CODE ------------------
 %
 % Please record any changes to the software in the change history 
@@ -150,6 +115,8 @@ end
 % Developer      |    Date    |     Description
 %--------------------------------------------------
 % L. Baars       | 07-02-2025 | Initial Development
+% L. Baars       | 09-17-2025 | Updated to used ConjDecoder to read CDM
+%                               file info.
 
 % =========================================================================
 %

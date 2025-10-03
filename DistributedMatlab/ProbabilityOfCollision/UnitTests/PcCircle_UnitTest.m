@@ -11,7 +11,7 @@ classdef (SharedTestFixtures = { ...
 %
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -23,14 +23,13 @@ classdef (SharedTestFixtures = { ...
 %
 % =========================================================================
 %
-% Initial version: Aug 2023;  Latest update: Dec 2023
+% Initial version: Aug 2023;  Latest update: Sep 2025
 %
 % ----------------- BEGIN CODE -----------------
     
     properties (TestParameter)
-        AlfanoHBR = {15, 4, 15, 15, 10, 10, 10, 4, 6, 6, 4};
-        AlfanoTLimit = {21600, 21600, 21600, 21600, 1419, 1419, 1419, 10135, 10800, 21600, 1420};
-        AlfanoAccuracy = {0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001};                  
+        AlfanoHBR = {15, 4, 15, 15, 10, 10, 10, 4, 6, 6, 4, 4};
+        AlfanoAccuracy = {0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001};                  
         AlfanoExpSolution = { 1.46749549E-01, ...
                               6.22226700E-03, ...
                               1.00351176E-01, ...
@@ -41,8 +40,9 @@ classdef (SharedTestFixtures = { ...
                               3.69480080E-02, ...
                               2.90146291E-01, ...
                               2.90146291E-01, ...
-                              2.67202600E-03 };
-        AlfanoFileNum = {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'};
+                              2.67202600E-03, ...
+                              NaN};
+        AlfanoFileNum = {'01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'};
         
         omitronR1      = {[378.39559 4305.721887 5752.767554]};
         omitronV1      = {[2.360800244 5.580331936 -4.322349039]};
@@ -346,6 +346,79 @@ classdef (SharedTestFixtures = { ...
             actSolution = PcCircle(r1,v1,cov1,r2,v2,cov2,HBR);
             testCase.verifyEqual(actSolution, expSolution, 'RelTol', 1E-10);
         end
+
+        % Tests all Alfano test cases in vectorized mode
+        function testAlfanoVectorized(testCase)
+            numRows = length(testCase.AlfanoHBR);
+            HBR = cell2mat(testCase.AlfanoHBR)';
+            accuracy = cell2mat(testCase.AlfanoAccuracy)';
+            expSolution = cell2mat(testCase.AlfanoExpSolution)';
+            fileNum = testCase.AlfanoFileNum;
+            r1 = nan(numRows,3);
+            v1 = nan(numRows,3);
+            C1 = nan(numRows,9);
+            r2 = nan(numRows,3);
+            v2 = nan(numRows,3);
+            C2 = nan(numRows,9);
+            for i = 1:numRows
+                params.case_list = str2double(fileNum{i});
+                params.data_path = '../../../DataFiles/AlfanoInputData/Alfano_2009_Test_Cases';
+                conj = GetAlfanoTestCases(params);
+                r1(i,:) = conj.X1(1:3)';
+                v1(i,:) = conj.X1(4:6)';
+                C1(i,:) = [conj.C1(1,1) conj.C1(2,1) conj.C1(3,1) conj.C1(1,2) conj.C1(2,2) conj.C1(3,2) conj.C1(1,3) conj.C1(2,3) conj.C1(3,3)];
+                r2(i,:) = conj.X2(1:3)';
+                v2(i,:) = conj.X2(4:6)';
+                C2(i,:) = [conj.C2(1,1) conj.C2(2,1) conj.C2(3,1) conj.C2(1,2) conj.C2(2,2) conj.C2(3,2) conj.C2(1,3) conj.C2(2,3) conj.C2(3,3)];
+            end
+
+            actSolution = PcCircle(r1,v1,C1,r2,v2,C2,HBR);
+            for i = 1:numRows
+                testCase.verifyEqual(actSolution(i),expSolution(i),'RelTol',accuracy(i));
+            end
+        end
+
+        % Tests all Alfano test cases in vectorized mode, interspersing the
+        % special cases (i.e., zero miss distance and zero relative
+        % velocity) throughout the calculation
+        function testAlfanoVectorizedWithSpecialCases(testCase)
+            numRows = length(testCase.AlfanoHBR);
+            HBR = cell2mat(testCase.AlfanoHBR)';
+            accuracy = cell2mat(testCase.AlfanoAccuracy)';
+            expSolution = cell2mat(testCase.AlfanoExpSolution)';
+            fileNum = testCase.AlfanoFileNum;
+            r1 = nan(numRows,3);
+            v1 = nan(numRows,3);
+            C1 = nan(numRows,9);
+            r2 = nan(numRows,3);
+            v2 = nan(numRows,3);
+            C2 = nan(numRows,9);
+            for i = 1:numRows
+                params.case_list = str2double(fileNum{i});
+                params.data_path = '../../../DataFiles/AlfanoInputData/Alfano_2009_Test_Cases';
+                conj = GetAlfanoTestCases(params);
+                r1(i,:) = conj.X1(1:3)';
+                v1(i,:) = conj.X1(4:6)';
+                C1(i,:) = [conj.C1(1,1) conj.C1(2,1) conj.C1(3,1) conj.C1(1,2) conj.C1(2,2) conj.C1(3,2) conj.C1(1,3) conj.C1(2,3) conj.C1(3,3)];
+                r2(i,:) = conj.X2(1:3)';
+                v2(i,:) = conj.X2(4:6)';
+                C2(i,:) = [conj.C2(1,1) conj.C2(2,1) conj.C2(3,1) conj.C2(1,2) conj.C2(2,2) conj.C2(3,2) conj.C2(1,3) conj.C2(2,3) conj.C2(3,3)];
+                if mod(i,3) == 1
+                    % Special case 1: Zero miss distance
+                    r1(i,:) = r2(i,:);
+                    expSolution(i) = PcCircle(r1(i,:),v1(i,:),conj.C1,r2(i,:),v2(i,:),conj.C2,HBR(i));
+                elseif mod(i,3) == 2
+                    % Special case 2: Zero relative velocity
+                    v1(i,:) = v2(i,:);
+                    expSolution(i) = PcCircle(r1(i,:),v1(i,:),conj.C1,r2(i,:),v2(i,:),conj.C2,HBR(i));
+                end
+            end
+
+            actSolution = PcCircle(r1,v1,C1,r2,v2,C2,HBR);
+            for i = 1:numRows
+                testCase.verifyEqual(actSolution(i),expSolution(i),'RelTol',accuracy(i));
+            end
+        end
     end
     
     methods (Test, ParameterCombination = 'sequential')
@@ -380,10 +453,13 @@ end
 % L. Baars       | 12-06-2023 | Renamed to PcCircle_UnitTest.m and added
 %                               some extra testing for zero miss distance
 %                               and zero relative velocity testing.
+% L. Baars       | 09-22-2025 | Added vectorized tests for Alfano test
+%                               cases. Also, added Alfano's 12th test case
+%                               (zero relative velocity) into the test set.
 
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %

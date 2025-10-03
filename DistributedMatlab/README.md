@@ -21,7 +21,7 @@ Frisbee (2015) proposed a method by which the maximum possible probability of co
 
 A method that may be employed as a method of determining the probability of collision is to perform a Monte Carlo simulation of both the primary and secondary object states at the time of close approach and statistically determine the probability of collision based on the number of trials which violate a predetermined proximity threshold. A Monte Carlo simulation is a computational technique that allows a probabilistic process to be modelled using random sampling from a known multivariate distribution. As the process of orbit determination yields both a best estimate of a satellite state and its associated uncertainty, the problem of collision probability lends itself well to using Monte Carlo sampling methodology.
 
-> **Note:** The Monte Carlo Pc algorithm will take a long time to run. This functionality will be replaced with our Simple Dynamics Monte Carlo algorithm in a future release.
+> **Note:** The Monte Carlo Pc algorithm will take a long time to run. This functionality has been replaced with our Simple Dynamics Monte Carlo (SDMC) algorithm within the ProbabilityOfCollision directory.
 
 ## OD Quality Assessment
 
@@ -29,7 +29,7 @@ The Orbit Determination Quality Assessment (ODQA) algorithm is intended to analy
 
 ## Probability of Collision
 
-The Probability of Collision (Pc) provides a metric to assess the risk that a satellite close approach event leads to an actual collision. There are a number of formulations for calculating Pc provided within this directory.
+The Probability of Collision (Pc) provides a metric to assess the risk that a satellite close approach event leads to an actual collision. There are a number of formulations for calculating Pc provided within this directory. The `PcMultiStep*.m` family of tools are the recommended methods to use when calculating a Pc. See the `SDK_Documentation_PcMultiStepCalculations.docx` file within `ProbabilityOfCollision\Documentation` for further information.
 
 ## Utils
 
