@@ -1,6 +1,7 @@
 classdef (SharedTestFixtures = { ...
         matlab.unittest.fixtures.PathFixture('..') ...
         matlab.unittest.fixtures.PathFixture('../Utils') ...
+        matlab.unittest.fixtures.PathFixture('../../Utils/AugmentedMath') ...
         matlab.unittest.fixtures.PathFixture('../../Utils/CDMAnalysis') ...
         matlab.unittest.fixtures.PathFixture('../../Utils/CovarianceTransformations') ...
         matlab.unittest.fixtures.PathFixture('../../Utils/TimeTransformations') ...
@@ -10,7 +11,7 @@ classdef (SharedTestFixtures = { ...
 %
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2019-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -22,7 +23,7 @@ classdef (SharedTestFixtures = { ...
 %
 % =========================================================================
 %
-% Initial version: Dec 2019;  Latest update: Aug 2023
+% Initial version: Dec 2019;  Latest update: Oct 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -154,10 +155,12 @@ end
 %                               of unit tests
 % E. White       | 08-09-2023 | Changed unit tests to use correct Alfano 
 %                               data
+% L. Baars       | 10-06-2025 | Updated path fixtures for more consistent
+%                               passing runs.
 
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2019-2025 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %

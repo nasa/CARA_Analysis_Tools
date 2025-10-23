@@ -1,5 +1,6 @@
-classdef (SharedTestFixtures = ...
-        {matlab.unittest.fixtures.PathFixture('..')}) ...
+classdef (SharedTestFixtures = { ...
+        matlab.unittest.fixtures.PathFixture('..') ...
+        matlab.unittest.fixtures.PathFixture('../../AugmentedMath')}) ...
         ECI2RIC_UnitTest < matlab.unittest.TestCase
 % ECI2RIC - Unit test for ECI2RIC
 %
@@ -11,7 +12,7 @@ classdef (SharedTestFixtures = ...
 %
 % =========================================================================
 %
-% Initial version: Aug 2023;  Latest update: Apr 2025
+% Initial version: Aug 2023;  Latest update: Oct 2025
 %
 % ----------------- BEGIN CODE -----------------
     
@@ -184,6 +185,8 @@ end
 % E. White       | 08-07-2023 | Initial development
 % L. Baars       | 04-23-2025 | Added verification of actual values
 %                               produced by the transformations.
+% L. Baars       | 10-06-2025 | Updated path fixtures for more consistent
+%                               passing runs.
 
 % =========================================================================
 %

@@ -552,7 +552,7 @@ function [Pc,out] = PcMultiStep(r1,v1,C1,r2,v2,C2,HBR,params)
 %
 % =========================================================================
 %
-% Initial version: Feb 2023;  Latest update: Aug 2025
+% Initial version: Feb 2023;  Latest update: Oct 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -719,18 +719,25 @@ else
 end
 
 %% Check for data quality errors
+q_error_msg = 'Unable to calculate Pc due to invalid 3x3 covariance matrices:';
+msg_len = strlength(q_error_msg);
 
-% Check for default convariances, populated with covariance
+% Check for default covariances, populated with covariance
 % sigma values of ten Earth radii
 rEarth = 6378135; % in meters
 defaultCovCutoff = (rEarth * 0.99 * 10) ^ 2; % (99% of 10*rEarth)^2
 if any(diag(C1(1:3,1:3)) >= defaultCovCutoff)
     out.DataQualityError.defaultCovPri = true;
+    q_error_msg = [q_error_msg ' Primary Cov >= Default Covariance Cutoff'];
 else
     out.DataQualityError.defaultCovPri = false;
 end
 if any(diag(C2(1:3,1:3)) >= defaultCovCutoff)
     out.DataQualityError.defaultCovSec = true;
+    if (strlength(q_error_msg) > msg_len)
+           q_error_msg = [q_error_msg ','];
+    end
+    q_error_msg = [q_error_msg ' Secondary Cov >= Default Covariance Cutoff'];
 else
     out.DataQualityError.defaultCovSec = false;
 end
@@ -740,11 +747,19 @@ out.DataQualityError.defaultCov = out.DataQualityError.defaultCovPri || ...
 % Check for negative sigma^2 values 
 if any(diag(C1) < 0)
     out.DataQualityError.invalidCovPri = true;
+    if (strlength(q_error_msg) > msg_len)
+          q_error_msg = [q_error_msg ','];
+    end
+    q_error_msg = [q_error_msg ' Primary Cov has negative sigma^2 value'];
 else
     out.DataQualityError.invalidCovPri = false;
 end
 if any(diag(C2) < 0)
     out.DataQualityError.invalidCovSec = true;
+    if (strlength(q_error_msg) > msg_len)
+         q_error_msg = [q_error_msg ','];
+    end
+    q_error_msg = [q_error_msg ' Secondary Cov has negative sigma^2 value'];
 else
     out.DataQualityError.invalidCovSec = false;
 end
@@ -764,11 +779,19 @@ out.DataQualityError.invalidCov6x6 = false;
 zeros3x1 = zeros(3,1);
 if isequal(zeros3x1,diag(C1(1:3,1:3)))
     out.DataQualityError.invalidCov3x3Pri = true;
+    if (strlength(q_error_msg) > msg_len)
+          q_error_msg = [q_error_msg ','];
+    end
+    q_error_msg = [q_error_msg ' Primary Cov contains position components with values of zero'];
 else
     out.DataQualityError.invalidCov3x3Pri = false;
 end
 if isequal(zeros3x1,diag(C2(1:3,1:3)))
     out.DataQualityError.invalidCov3x3Sec = true;
+    if (strlength(q_error_msg) > msg_len)
+           q_error_msg = [q_error_msg ','];
+    end
+    q_error_msg = [q_error_msg ' Secondary Cov contains position components with values of zero'];
 else
     out.DataQualityError.invalidCov3x3Sec = false;
 end
@@ -787,8 +810,7 @@ out.AnyDataQualityErrors = out.DataQualityError.defaultCov || ...
                            out.DataQualityError.invalidCov3x3;
                        
 if out.AnyDataQualityErrors
-    out.PcMethod = [out.PcMethod ...
-        ' (cannot calculate Pc due to invalid 3x3 cov. matrices)'];
+    out.PcMethod = [out.PcMethod, q_error_msg];
     return;
 end
 
@@ -1520,6 +1542,8 @@ end
 % L. Baars       | 2025-AUG-21 | Updated code for public release.
 % L. Baars       | 2025-SEP-15 | Set out.AnyPc2DViolations to true when any
 %                                Pc-2D usage violations fail to converge.
+% L. Baars       | 2025-OCT-06 | Enhanced error messages for data quality
+%                                errors.
 
 % =========================================================================
 %

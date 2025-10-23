@@ -1,10 +1,25 @@
 classdef (SharedTestFixtures = { ...
         matlab.unittest.fixtures.PathFixture('..') ...
+        matlab.unittest.fixtures.PathFixture('../../Utils/AugmentedMath') ...
         matlab.unittest.fixtures.PathFixture('../../Utils/CDMAnalysis') ...
         matlab.unittest.fixtures.PathFixture('../../Utils/CovarianceTransformations') ...
-        matlab.unittest.fixtures.PathFixture('../../Utils/TimeTransformations')}) ...
+        matlab.unittest.fixtures.PathFixture('../../Utils/TimeTransformations') ...
+        matlab.unittest.fixtures.PathFixture('../../ProbabilityOfCollision') ...
+        matlab.unittest.fixtures.PathFixture('../../ProbabilityOfCollision/Utils')}) ...
         FrisbeeMaxPc_UnitTest < matlab.unittest.TestCase
-%% Series of Tests intended to test the 2D probability of Collision Calculation at TCA
+% Series of Tests intended to test the 2D probability of Collision Calculation at TCA
+%
+% =========================================================================
+%
+% Copyright (c) 2019-2025 United States Government as represented by the
+% Administrator of the National Aeronautics and Space Administration.
+% All Rights Reserved.
+%
+% =========================================================================
+%
+% Initial version: Dec 2019;  Latest update: Oct 2025
+%
+% ----------------- BEGIN CODE -----------------
 
     methods (Test)
         function test01(testCase) % Alfano Test Case 1
@@ -1610,3 +1625,27 @@ classdef (SharedTestFixtures = { ...
         end
     end 
 end
+
+% ----------------- END OF CODE ------------------
+%
+% Please record any changes to the software in the change history 
+% shown below:
+%
+%---------------- CHANGE HISTORY ------------------
+% Developer      |    Date    |     Description
+%--------------------------------------------------
+% T. Lechtenberg | 12-13-2019 | Initial Development
+% T. Lechtenberg | 03-19-2020 | Removed default parameters from
+%                               FrisbeeMaxPc calls
+% L. Baars       | 10-03-2022 | Changed addpaths to path fixtures. Moved
+%                               CDMs to DataFiles directory.
+% L. Baars       | 10-07-2025 | Added to path fixtures to better stabilize
+%                               unit tests.
+
+% =========================================================================
+%
+% Copyright (c) 2019-2025 United States Government as represented by the
+% Administrator of the National Aeronautics and Space Administration.
+% All Rights Reserved.
+%
+% =========================================================================
