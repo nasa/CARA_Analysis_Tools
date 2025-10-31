@@ -39,6 +39,11 @@ function [SDMCPc,SDMCPcUnc,numHits,trialData] = call_SDMC(r1,v1,C1,r2,v2,C2,HBR,
 %     .profile file on Linux) and Matlab must be restarted once the
 %     variable is set correctly.
 %
+%     This has been updated so that on Linux for Matlab ver 9.10+ setting
+%     the LD_LIBRARY_PATH is unnecessary. Also, note that if recompliation
+%     of the mex files is required, then you must have the appropriate
+%     Intel Fortran libraries in LD_LIBRARY_PATH.
+%
 % =========================================================================
 %
 % INPUT:
@@ -161,7 +166,9 @@ function [SDMCPc,SDMCPcUnc,numHits,trialData] = call_SDMC(r1,v1,C1,r2,v2,C2,HBR,
                 mex('-R2018a',includeopt,libopt,...
                     '-lsdmc_linux',...
                     '-lifcore','-lifport','-limf','-lintlc','-lsvml',...
-                    'matlab_sdmc_wrapper.cpp','sdmcEntry.cpp','-output',matlab_sdmc_wrapper);
+                    'matlab_sdmc_wrapper.cpp','sdmcEntry.cpp', ...
+                    ['LDFLAGS=$LDFLAGS -Wl,-rpath=' './lib'], ... % linker flag - avoid needing environment var
+                    '-output', matlab_sdmc_wrapper);
             end
         elseif ispc
             mex('-R2018a',includeopt,libopt,...
@@ -403,7 +410,9 @@ end
 %                                the description about these variables.
 % L. Baars       | 2025-Aug-06 | Minor documentation updates in preparation
 %                                for public release.
-
+% S. Shaw        | 2025-Oct-31 | Added linker flag so that the
+%                                LD_LIBRARY_PATH is not necessary on linux
+%                                for Matlab version 9.10+.
 % =========================================================================
 %
 % Copyright (c) 2023-2025 United States Government as represented by the
