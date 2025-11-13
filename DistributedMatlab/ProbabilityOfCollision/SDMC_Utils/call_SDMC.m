@@ -167,7 +167,7 @@ function [SDMCPc,SDMCPcUnc,numHits,trialData] = call_SDMC(r1,v1,C1,r2,v2,C2,HBR,
                     '-lsdmc_linux',...
                     '-lifcore','-lifport','-limf','-lintlc','-lsvml',...
                     'matlab_sdmc_wrapper.cpp','sdmcEntry.cpp', ...
-                    ['LDFLAGS=$LDFLAGS -Wl,-rpath=' './lib'], ... % linker flag - avoid needing environment var
+                    'LDFLAGS=$LDFLAGS -Wl,-rpath=''$ORIGIN''./lib', ... % linker flag - avoid needing environment var
                     '-output', matlab_sdmc_wrapper);
             end
         elseif ispc
@@ -410,7 +410,7 @@ end
 %                                the description about these variables.
 % L. Baars       | 2025-Aug-06 | Minor documentation updates in preparation
 %                                for public release.
-% S. Shaw        | 2025-Oct-31 | Added linker flag so that the
+% S. Shaw        | 2025-Nov-13 | Added linker flag so that the
 %                                LD_LIBRARY_PATH is not necessary on linux
 %                                for Matlab version 9.10+.
 % =========================================================================
