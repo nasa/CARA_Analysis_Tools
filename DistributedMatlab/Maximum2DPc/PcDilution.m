@@ -1,7 +1,7 @@
 function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,v2,cov2,HBR,params)
 % PcDilution - Evaluates collision probability (Pc) dilution and calculates
 %              the associated maximum Pc value, resulting from scaling a
-%              conjunction's secondary (default) or primary 3x3 position
+%              conjunction's secondary or primary 3x3 position, or both (default)
 %              uncertainty covariance matrix by applying a "covariance
 %              scaling factor" (Sf). 
 %
@@ -23,9 +23,9 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
 %    HBR     - Hard body region (meters)
 %    params  - Run parameters [optional]
 %            - params.RefineCA = Flag to refine CA point before analysis
-%               (default = false; assumes true CA quantities are input)
+%               (default = true; states propagated to true TCA)
 %            - params.PriSecScaling = Scaled scovariance, can be 'primary'
-%               'secondary' or 'both' (default = 'secondary')
+%               'secondary' or 'both' (default = 'both')
 %            - params.RedFact = Pc reduction factor required for
 %               convergence. Recommendations:
 %               1) Use RedFact = 10 to 100 when plotting the (Sf,Pc)
@@ -37,6 +37,9 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
 %                (default = 1e-6).
 %            - params.DilutTol - Tolerance to evaluate the occurence of
 %                a diluted PcMax value (default = 1e-3).
+%            - params.MissDist2HbrTol - Tolerance to assign Miss Distance 
+%                to HBR when within tolerance proximity of the HBR 
+%                (default = 1e-8).
 %            - params.itermax - Maximum number of iterations allowed to
 %               converge upon PcMax (default = 100)
 %            - params.SfInit - Initial range of covariance scale factors
@@ -50,6 +53,9 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
 %               0 = No plotting (default)
 %               1 = Plot final results only
 %               2 = Plot iteration-by-iteration results
+%            - params.StopCalcIfRobust - Detect if in the robust region
+%               early and avoid performing the numerical calculation if so.
+%               (default - true, cannot be true if params.plotting is not 0)
 %
 % Outputs:
 %    PcOne   - Pc calculated for unscaled covariances (i.e., for a cov.
@@ -67,10 +73,11 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
 %
 % Note:
 %    The "covariance scale factors" factors returned by this function, 
-%    SfMax and Sf, are multiplied by the original covariance to obtain the
-%    scaled covariance. Often square roots of these output factors are used
-%    for plotting dilution curves, or to pre- and post-multiply the
-%    original covariance matrix to obtain the scaled covariance.
+%    SfMax and Sf, are multiplied by each of the 3 positional uncertainty 
+%    elements to obtain the scaled covariance. 
+%    These output factors are used for plotting dilution curves, 
+%    or to pre- and post-multiply the original covariance matrix to obtain 
+%    the scaled covariance.
 %
 % References:  M.Hejduk (2019) "Satellite Conjunction Assessment Risk 
 %              Analysis for 'Dilution Region' Events: Issues and
@@ -86,12 +93,13 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
 % Other m-files required:
 %   FindNearbyCA.m
 %   isconstant.m
-%   PcElrod.m
+%   PcCircle.m
+%   plot_range.m
 % Subfunctions: None
 % MAT-files required: None
 % See also: None
 %
-% November 2019; Last revision: 2023-FEB-27
+% November 2019; Last revision: 2025-OCT-31
 %
 % ----------------- BEGIN CODE -----------------
     
@@ -99,6 +107,8 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
     if isempty(pathsAdded)
         [p,~,~] = fileparts(mfilename('fullpath'));
         s = what(fullfile(p,'../ProbabilityOfCollision')); addpath(s.path);
+        s = what(fullfile(p,'../ProbabilityOfCollision/Utils')); addpath(s.path);
+        s = what(fullfile(p,'../Utils/Plotting')); addpath(s.path);
         pathsAdded = true;
     end
 
@@ -113,14 +123,15 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
     % Refine CA point before analysis
     
     if ~isfield(params,'RefineCA') || isempty(params.RefineCA)
-        params.RefineCA = false;
+        params.RefineCA = true;
     end
     
     % Scaling secondary covariance (default), primary or both
     
     if ~isfield(params,'PriSecScaling') || isempty(params.PriSecScaling)
-        params.PriSecScaling = 'Secondary';
+        params.PriSecScaling = 'both';
     end
+
     
     % Pc reduction factor required for convergence
     
@@ -138,6 +149,12 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
     
     if ~isfield(params,'DilutTol') || isempty(params.DilutTol)
         params.DilutTol = 1e-3;
+    end
+
+    % Set Miss Distance Equal to HBR Within Tolerance
+    
+    if ~isfield(params,'MissDist2HbrTol') || isempty(params.MissDist2HbrTol)
+        params.MissDist2HbrTol = 1e-8;
     end
     
     % Maximum iteration numbers require for convergence
@@ -168,6 +185,13 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
         params.plotting = 0;
     end
     
+
+    % Stop calculation if in the robust region and there is no need to find Pmax
+    
+    if ~isfield(params,'StopCalcIfRobust') || isempty(params.StopCalcIfRobust)
+        params.StopCalcIfRobust = true;
+    end
+
     % Check for valid parameters
     
     SfInit = unique(params.SfInit); % Sort into increasing order
@@ -213,10 +237,17 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
         r1 = X1(1:3)'; v1 = X1(4:6)';
         r2 = X2(1:3)'; v2 = X2(4:6)';
     end
-    
-    % Ensure the covariance matrices are 3x3 (i.e., trim any 6x6 matrices)
-    
+
+    % Size down covariances to 3x3
     cov1 = cov1(1:3,1:3); cov2 = cov2(1:3,1:3);
+
+    % Check if StopCalcIfRobust and plotting are turned on simultaneously
+    if params.StopCalcIfRobust && params.plotting > 0
+        warning('Cannot stop calculation if in the robust region when plotting is requested. "StopCalcIfRobust" set to false.')
+        params.StopCalcIfRobust = false;
+    end
+
+    
 
     % Initialize output buffers to null, just in case no iterations are
     % required to converge upon dilution solution
@@ -227,13 +258,17 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
     % the Pc estimate reduces to that of a hard-body collision
     
     iszerocov1 = all(cov1(:) == 0); iszerocov2 = all(cov2(:) == 0);
-    
+
+    DCA = norm(r1-r2); % Distance of closest approach
+    % If DCA is near the HBR sphere surface within a small tolerance,
+    % consider the DCA to be equal to HBR.
+    if abs(DCA-HBR)<params.MissDist2HbrTol*HBR; DCA = HBR; end 
+
     if iszerocov1 && iszerocov2
         if params.verbose
             disp('Both covariances zero => no dilution possible');
         end
         Diluted = false;
-        DCA = norm(r1-r2); % Distance of closest approach
         if (DCA < HBR)
             PcOne = 1; % Hard-body collision
         else
@@ -243,9 +278,14 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
         return;
     end
     
+
     % Find the Pc value for no cov. scaling (i.e., for Sf = 1)
     
-    [PcOne,CpOne] = PcElrod(r1,v1,cov1,r2,v2,cov2,HBR);
+    [PcOne,out] = PcCircle(r1,v1,cov1,r2,v2,cov2,HBR);
+    xm = out.xm;
+    ym = out.zm;
+    sigx = out.sx;
+    sigy = out.sz;
     
     % Return if 2D-Pc is NaN, but indicate no convergence
     
@@ -256,15 +296,9 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
     
     % Compare scaling factor to analytical approximations
     if (params.plotting > 0) && all(PriSecScaling)
-        [Evec,Sig2] = eig(CpOne);
-        Sig2 = diag(Sig2);
-        [MaxSig2,nmx] = max(Sig2);
-        [MinSig2,~] = min(Sig2);
-        theta = atan2(Evec(2,nmx),Evec(1,nmx));
+        theta = atan(xm/ym);
         cth = cos(theta); sth = sin(theta);
         dist = norm(r1-r2);
-        sigx = sqrt(MinSig2);
-        sigy = sqrt(MaxSig2);
         smallHBR = HBR < 0.2*min([dist,sigx,sigy]);
         if smallHBR
             SfMaxApp = (dist/(sqrt(2)*sigx*sigy))*sqrt((sigx*cth)^2+(sigy*sth)^2);
@@ -304,19 +338,50 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
         % Scaling both pri & sec covariance to zero again reduces to a
         % hard-body collision probability in the small scale factor limit,
         % because both covariances approach zero
-        DCA = norm(r1-r2); % Distance of closest approach
         if (DCA < HBR)
-            PcZero = 1; % Hard-body collision
+            if params.StopCalcIfRobust
+                PcMax = 1; SfMax = 0; Pc = 1; Sf = 0; conv = true; iter = 0; % Based on theory
+                Diluted = ~isconstant([PcOne PcMax],params.DilutTol);
+                return;
+            else
+                PcZero = 1;
+            end
+        elseif (DCA == HBR)
+            if params.StopCalcIfRobust
+                PcMax = 0.5; SfMax = 0; Pc = 0.5; Sf = 0; conv = true; iter = 0; % Based on theory
+                Diluted = ~isconstant([PcOne PcMax],params.DilutTol);
+                return;
+            else
+                PcZero = 0.5;
+            end
         else
             PcZero = 0; % No hard-body collision
         end
     else
+        % Pc value for Sf = 0
         % Scale pri or sec covariance using Sf = 0
         if PriSecScaling(1); f1 = 0; else; f1 = 1; end
         if PriSecScaling(2); f2 = 0; else; f2 = 1; end
-        % Pc value for Sf = 0
-        PcZero = PcElrod(r1,v1,f1*cov1,r2,v2,f2*cov2,HBR);
+        PcZero = PcCircle(r1,v1,f1*cov1,r2,v2,f2*cov2,HBR);
     end
+
+
+    % Quickly find if in robust region or in dilution region
+    if params.StopCalcIfRobust
+        dSfMin = min(params.dLfLevel);
+        dSf2Min = dSfMin^2;
+        Sf2Delta = 1 - dSf2Min; % Slightly reduce scale factor from one
+        Sf2_1 = 1; Sf2_2 = 1;
+        if PriSecScaling(1); Sf2_1 = Sf2Delta; end
+        if PriSecScaling(2); Sf2_2 = Sf2Delta; end
+        PcDelta = PcCircle(r1,v1,cov1*Sf2_1,r2,v2,cov2*Sf2_2,HBR); % Calculate Pc at SF < 1
+        if PcDelta < PcOne
+            PcMax = PcOne; SfMax = 1; Pc = PcOne; Sf = 1; conv = true; iter = 0;
+            Diluted = false;
+            return;
+        end
+    end
+
     
     % Initial cov. scale factors and log10 values
     
@@ -344,7 +409,7 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
     
     % Iterate until converged or iteration limit exceeded
     
-    iterating = true; conv = false; Pc0 = PcOne;
+    iterating = true; conv = false;
 
     while iterating
         
@@ -362,18 +427,19 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
         c1 = NaN(3,3,N); c2 = c1;
         
         for n=1:N
-            c1(:,:,n) = cov1*f1(n);
-            c2(:,:,n) = cov2*f2(n);
+            c1(:,:,n) = cov1(1:3,1:3)*f1(n); 
+            c2(:,:,n) = cov2(1:3,1:3)*f2(n);
         end
 
         % Pc for scaled covariances
 
         Nx1 = [N 1];
-        Pcb = PcElrod( ...
+        Pcb = PcCircle( ...
             repmat(r1,Nx1),repmat(v1,Nx1),c1, ...
             repmat(r2,Nx1),repmat(v2,Nx1),c2, ...
             repmat(HBR,Nx1));
-        
+
+
         % Add to buffers
         
         Sf = cat(1,Sf,Sfb); Pc = cat(1,Pc,Pcb); Nf = numel(Sf);
@@ -446,7 +512,6 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
             plot(1,PcOne,'or');
             hold off;
             drawnow;
-            keyboard;
         end
         
     end
@@ -456,6 +521,12 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
     Sf = cat(1,1,Sf);
     Pc = cat(1,PcOne,Pc);
     [Sf,srt] = unique(Sf); Pc = Pc(srt);
+
+    % Unless due to numerical accuracies, the Pc should never exceed 0.5 if
+    % the miss distance is outside the HBR sphere
+    if DCA > HBR
+        Pc(Pc>0.5) = 0.5;
+    end
 
     % Define best-estimate Pc maximum
 
@@ -514,7 +585,6 @@ function [PcOne,Diluted,PcMax,SfMax,Pc,Sf,conv,iter] = PcDilution(r1,v1,cov1,r2,
         ylabel('Pc');
         title(['Primary scaling = ' num2str(PriSecScaling(1)) ...
             ' Secondary scaling = ' num2str(PriSecScaling(2))]);
-        keyboard;
     end
     
     return;
@@ -544,3 +614,11 @@ end
 %                                reorganization.
 % L. Baars       | 2023-FEB-27 | Fixed relative pathing issue in addpath
 %                                calls.
+% S.Es haghi     | 2025-AUG-22 | Code updated to use PcCircle
+% S.Es haghi     | 2025-AUG-26 | Update code header. Change default
+%                                settings to match Alfano's methodology. 
+% S.Es haghi     | 2025-OCT-15 | Set default TCA correction option to true
+% S.Es haghi     | 2025-OCT-22 | Ease Pc computation based on the miss
+%                                distance location with respect to HBR
+% S.Es haghi     | 2025-OCT-31 | Add option to avoid iterative process if
+%                                detected to be in robust region early on
