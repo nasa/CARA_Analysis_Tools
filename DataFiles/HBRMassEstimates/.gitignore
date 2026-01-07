@@ -1,0 +1,3 @@
+# Don't ever include these files in this directory
+HBR_Mass_Estimates_*_Scrubbed.csv
+HBR_Mass_Estimates_*_NotForDistribution.csv

@@ -1,6 +1,60 @@
 function params = initialize_params(paramsInfo)
-
-% Get or create a parameters structure from input paramsInfo
+% initialize_params - Get or create a parameters structure from input 
+%                     paramsInfo
+%
+% Syntax: params = initialize_params(paramsInfo)
+%
+% =========================================================================
+%
+% Copyright (c) 2025 United States Government as represented by the
+% Administrator of the National Aeronautics and Space Administration.
+% All Rights Reserved.
+%
+% =========================================================================
+%
+% Description: Get or create a parameters structure from input paramsInfo
+%
+% =========================================================================
+%
+% Input:
+%
+%   paramsInfo  - Optional - Variable containing info from which to build 
+%                 parameterstruct. May be empty, struct, or a string 
+%                 specifying aparams filename. 
+%                 (default = [])
+%
+% =========================================================================
+%
+% Output:
+%
+%   params      - Parameters struct based on input:
+%
+%                   empty: empty array which will lead to
+%                   EventRate_default_params.m using default values for all
+%                   fields
+%
+%                   struct: A copy of the input struct
+%
+%                   string: Copy of struct stored in filename specified in
+%                   paramsInfo
+%
+% =========================================================================
+%
+% Dependencies:
+%
+%   None
+%
+% =========================================================================
+%
+% Subfunctions:
+%
+%   None
+%
+% =========================================================================
+%
+% Initial version: Apr 2022;  Latest update: Apr 2022
+%
+% ----------------- BEGIN CODE -----------------
 
 if nargin < 1; paramsInfo = []; end
 
@@ -64,3 +118,20 @@ end
 
 return
 end
+
+% ----------------- END OF CODE ------------------
+%
+% Please record any changes to the software in the change history
+% shown below:
+%
+% ----------------- CHANGE HISTORY ------------------
+% Developer |     Date    | Description
+% ---------------------------------------------------
+% D. Hall   | 2022-Apr-11 | Initial version.
+% =========================================================================
+%
+% Copyright (c) 2025 United States Government as represented by the
+% Administrator of the National Aeronautics and Space Administration.
+% All Rights Reserved.
+%
+% =========================================================================

@@ -303,6 +303,7 @@ if isempty(PathsAdded)
     s = what(fullfile(mpath,'../Utils/General')); addpath(s.path);
     s = what(fullfile(mpath,'../Utils/LoggingAndStringReporting')); addpath(s.path);
     s = what(fullfile(mpath,'../Utils/Plotting')); addpath(s.path);
+    s = what(fullfile(mpath,'../Utils/TimeTransformations')); addpath(s.path);
     PathsAdded = true;
 end
 

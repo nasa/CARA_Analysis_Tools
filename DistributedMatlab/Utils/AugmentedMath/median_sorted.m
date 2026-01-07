@@ -1,6 +1,47 @@
 function [xmed] = median_sorted(xsort)
-
-% Median from the sorted data
+% median_sorted - Median from sorted data
+%
+% Syntax: [xmed] = median_sorted(xsort)
+%
+% =========================================================================
+%
+% Copyright (c) 2025 United States Government as represented by the
+% Administrator of the National Aeronautics and Space Administration.
+% All Rights Reserved.
+%
+% =========================================================================
+%
+% Description: Median from sorted data
+%
+% =========================================================================
+%
+% Input:
+%
+%   xsort - Sorted data                                               [1xN]
+%
+% =========================================================================
+%
+% Output:
+%
+%   xmed  - median
+%
+% =========================================================================
+%
+% Dependencies:
+%
+%   None
+%
+% =========================================================================
+%
+% Subfunctions:
+%
+%   None
+%
+% =========================================================================
+%
+% Initial version: Apr 2022;  Latest update: Apr 2022
+%
+% ----------------- BEGIN CODE -----------------
 
 % Number of elements in sorted data set
 
@@ -21,3 +62,19 @@ else
 end
 
 end
+% ----------------- END OF CODE ------------------
+%
+% Please record any changes to the software in the change history
+% shown below:
+%
+% ----------------- CHANGE HISTORY ------------------
+% Developer |     Date    | Description
+% ---------------------------------------------------
+% D. Hall   | 2022-Apr-11 | Initial version.
+% =========================================================================
+%
+% Copyright (c) 2025 United States Government as represented by the
+% Administrator of the National Aeronautics and Space Administration.
+% All Rights Reserved.
+%
+% =========================================================================
