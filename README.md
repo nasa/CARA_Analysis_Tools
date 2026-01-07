@@ -2,6 +2,20 @@
 
 This Software Development Kit (SDK) provides a set of tools and utilities that have been developed by NASA's Conjunction Assessment Risk Analysis (CARA) team. These tools and data products are designed to help users assess the risk of close approach events between Earth-orbiting satellites. This software is provided to the public under several NASA Open Source Software Agreements (see the `NOSA_GSC-18593-1.pdf`, `NOSA_GSC-18848-1.pdf`, and `NOSA_GSC-19374-1.pdf` files to view the agreements).
 
+## Git LFS
+With the January 2026 release all `*.mat` files within the baseline are controlled with the Git Large File Storage (`lfs`) extension. This extension enables the storage of large binary files within a git repository in an efficient manner. *Git for Windows* includes `lfs` automatically, but other git installations will require a separate install. Please visit https://git-lfs.com/ for download and install instructions.
+
+> Note: Without `lfs` installed any `*.mat` files in the repository will download with text to links to the needed files. `lfs` is required in order to get the actual files within the repository.
+
+After downloading and installing `lfs`, run the following commands in a terminal (*Git Bash* on Windows, or a regular terminal on other operating systems) to activate `lfs` and make sure all `*.mat` files are actually downloaded:
+
+```bash
+git lfs install
+git lfs pull
+```
+
+> Note: These commands are only needed one time to install the `lfs` utility and then to fix any files that have been downloaded as links. After this, any updates to `lfs` controlled files within the repository will automatically download in the correct format.
+
 ## Directory/File Structure
 
 The following directories and files will be found at the top level of the SDK:
