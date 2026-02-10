@@ -25,6 +25,10 @@ following priorities:
   3. SFK RCS Estimate
   4. Default
 
+* Note: Space-Track was evaluated as a source for HBR data. It was decided not 
+        to use it since the data is populated by individual operators and the 
+		quality of HBR estimation varies from operator to operator.
+
 * Note: Due to data licensing constraints, NASA CARA cannot provide DISCOS data
         directly. However, a tool has been provided which will allow a user to
         download the data from the DISCOS website (requires setup of a user
