@@ -8,7 +8,7 @@ function out = EventRate(paramsInfo)
 %
 % =========================================================================
 %
-% Copyright (c) 2025 United States Government as represented by the
+% Copyright (c) 2025-2026 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -145,7 +145,7 @@ function out = EventRate(paramsInfo)
 %
 % =========================================================================
 %
-% Initial version: Apr 2022;  Latest update: Apr 2022
+% Initial version: Apr 2022;  Latest update: Feb 2026
 %
 % ----------------- BEGIN CODE -----------------
 %% Initializations
@@ -175,6 +175,9 @@ end
 
 %% Augment params structure with the default EventRate parameters
 params = EventRate_default_params(params);
+
+%% Automatically combine and partitioned files, as needed
+CombinePartitionedFiles(params.SplitFilesDir, params.DataDir);
 
 %% Check for OCMDB file and associated Pc table file
 if params.PcTable_mode == 0
@@ -234,9 +237,10 @@ end
 % Developer |     Date    | Description
 % ---------------------------------------------------
 % D. Hall   | 2022-Apr-11 | Initial version.
+% L. Baars  | 2026-Feb-24 | Added call to combine partitioned files.
 % =========================================================================
 %
-% Copyright (c) 2025 United States Government as represented by the
+% Copyright (c) 2025-2026 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %

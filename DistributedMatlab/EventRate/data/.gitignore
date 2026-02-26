@@ -1,2 +1,7 @@
 # Do not include the developer readme file into the GitHub version of the repo
 01_DEVELOPER_README.md
+
+# Do not include files that are too large to upload as individual files. The
+# GitHub limit is 50 MB per file.
+PcTable_202509.mat
+Test_B.mat

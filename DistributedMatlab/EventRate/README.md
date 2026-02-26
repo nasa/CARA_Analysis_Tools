@@ -1,4 +1,5 @@
-##
+# EventRate Tool
+
 EventRate is a semi-empirical risk analysis tool that estimates the risk for a prospective mission by 
 analyzing historical conjunction data from existing satellites in similar orbits. The primary risk metrics
 estimated by EventRate are:
@@ -44,3 +45,9 @@ Once a parameter structure script is written, EventRate can be run from the MATL
 
 where the parameter file being used in this example is params/test_mission.m. 
 Refer to doc/EventRate_Description.pdf for further information regarding the output structure.
+
+##
+> **NOTE:**
+> Due to GitHub file size constraints, large input data files have been split up and placed into
+> the `data/SplitFiles` subdirectory. The EventRate tool will automatically find newly created
+> split files and create a combined version of these files in the `data` subdirectory.

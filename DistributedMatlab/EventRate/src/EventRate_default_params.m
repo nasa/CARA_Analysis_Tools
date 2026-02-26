@@ -6,7 +6,7 @@ function params = EventRate_default_params(params)
 %
 % =========================================================================
 %
-% Copyright (c) 2025 United States Government as represented by the
+% Copyright (c) 2025-2026 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -38,6 +38,14 @@ function params = EventRate_default_params(params)
 %                                   RMM Pc threshold for mode 1; specifies 
 %                                   cumulative mission Pc goal mode 2)
 %                                   (default = 1.0E-4)
+%
+%       DataDir                   - Defines the directory where data files
+%                                   may be found.
+%                                   (default = 'data')
+%
+%       SplitFilesDir             - Defines the partitions of large data
+%                                   files may be found.
+%                                   (default = params.DataDir/SplitFiles)
 %
 %       OCMDBfile                 - OCMDB file name (set to a test file by 
 %                                   default)
@@ -171,7 +179,7 @@ function params = EventRate_default_params(params)
 %
 % =========================================================================
 %
-% Initial version: Apr 2022;  Latest update: Oct 2025
+% Initial version: Apr 2022;  Latest update: Feb 2026
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -186,6 +194,11 @@ end
 % EventRate Pc value (specifies fixed RMM Pc threshold for mode 1;
 %                     specifies cumulative mission Pc goal mode 2)
 params = set_default_param(params, 'EventRate_Pc_value', 1e-4);
+
+% Data directories
+[p,~,~] = fileparts(mfilename('fullpath'));
+params = set_default_param(params, 'DataDir', fullfile(p,'../data'));
+params = set_default_param(params, 'SplitFilesDir', fullfile(params.DataDir,'SplitFiles'));
 
 % Default OCMDB file
 params = set_default_param(params, 'OCMDBfile', '');
@@ -300,9 +313,10 @@ end
 % ---------------------------------------------------
 % D. Hall   | 2022-Apr-11 | Initial version.
 % N. Ravago | 2025-Oct-29 | Removed Pc function indicators
+% L. Baars  | 2026-Feb-24 | Added DataDir and SplitFilesDir parameters
 % =========================================================================
 %
-% Copyright (c) 2025 United States Government as represented by the
+% Copyright (c) 2025-2026 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
