@@ -227,6 +227,12 @@ classdef (SharedTestFixtures = { ...
             % Zero relative velocity
             testCase.verifyWarning(@() Pc3D_Hall(r1_J2K*1000,v1_J2K*1000,C1_J2K,r2_J2K*1000,v1_J2K*1000,C2_J2K,10), 'Pc3D_Hall:InvalidTimeBounds');
             
+            % This test case fails for me on R2025a. The code issues the
+            % following warning
+            % Warning: Matrix is singular, close to singular or badly 
+            %   scaled. Results may be inaccurate. RCOND = NaN.
+            % but does not throw an exception, so it does not trigger the
+            % custom warning expected by the test case.
             % NaN-valued velocity
             testCase.verifyWarning(@() Pc3D_Hall(r1_J2K*1000,v1_J2K*1000,C1_J2K,r2_J2K*1000,nanV,C2_J2K,10), 'EquinoctialMatrices:CalculationFailure');
             
