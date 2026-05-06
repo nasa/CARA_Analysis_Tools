@@ -81,15 +81,20 @@ function [figInfo] = Pc_Time_Plot(params, pcInfo)
 %
 % Output:
 %
-%   figInfo - Information pertaining to the figure generated. If
-%             params.plot_save_loc is true, then this value will contain
-%             the name of the file that was saved (including the full file
-%             path), otherwise, it will contain a reference to the figure
-%             handle for the plot that was created.
+%   figInfo - Structure containing information pertaining to the figure
+%             generated. Contains the following fields:
+%
+%       fileName - If params.plot_save_loc is a valid directory, then this
+%                  value will contain the name of the file that was saved.
+%                  Otherwise, it will be empty.
+%
+%       figHandle - If params.plot_save_loc is empty, then this value will
+%                   contain a reference to the figure handle for the plot
+%                   that was crated. Otherwise, it will be empty.
 %
 % =========================================================================
 %
-% Initial version: Mar 2023;  Latest update: Aug 2025
+% Initial version: Mar 2023;  Latest update: Oct 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -760,11 +765,14 @@ function [figInfo] = Pc_Time_Plot(params, pcInfo)
     
     %% Save the figure and close it if the figure has been saved
     [figSaved, fileName] = SaveConjFigure(fh, conjID, 'PcTime', params);
+    figInfo.figProps = get(fh);
     if figSaved
+        figInfo.fileName = fileName;
+        figInfo.figHandle = [];
         close(fh);
-        figInfo = fileName;
     else
-        figInfo = fh;
+        figInfo.figHandle = fh;
+        figInfo.fileName = '';
     end
 end
 
@@ -899,6 +907,8 @@ end
 % D. Hall        | 2024-Sep-16 | Added support for plotting BFMC data.
 % E. Toumey      | 2025-Mar-02 | Moved file for new directory structure.
 % L. Baars       | 2025-Aug-29 | Updated code for public release.
+% L. Baars       | 2025-Oct-15 | Adjusted the figInfo output for better
+%                                flexibility.
 
 % =========================================================================
 %

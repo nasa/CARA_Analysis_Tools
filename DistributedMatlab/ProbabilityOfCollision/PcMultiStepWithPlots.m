@@ -137,7 +137,7 @@ function [Pc,out] = PcMultiStepWithPlots(r1,v1,C1,r2,v2,C2,HBR,params)
 %                      2 = In this configuration, the conjunction plane is
 %                          rotated to align the axes with the principal
 %                          axes of the 2D-Pc ellipse.
-%                    Defaults to 0.
+%                    Defaults to 2.
 %
 %      AuxCAdistContour - Provides an option to turn on a beta-version
 %                         analytical visualization of the CA distribution
@@ -169,6 +169,10 @@ function [Pc,out] = PcMultiStepWithPlots(r1,v1,C1,r2,v2,C2,HBR,params)
 %
 %      caDistPlotFile - The name of the CA distribution plot file created
 %                       by this process.
+%
+%      uneqZoomFigParams - Key properties from the unequal zoom figure
+%                          axis. See CA_Dist_Plot.m for information on
+%                          specific fields.
 %
 % =========================================================================
 %
@@ -214,7 +218,7 @@ function [Pc,out] = PcMultiStepWithPlots(r1,v1,C1,r2,v2,C2,HBR,params)
 %
 % =========================================================================
 %
-% Initial version: Aug 2023;  Latest update: Aug 2025
+% Initial version: Aug 2023;  Latest update: Oct 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -269,7 +273,7 @@ function [Pc,out] = PcMultiStepWithPlots(r1,v1,C1,r2,v2,C2,HBR,params)
         params = set_default_param(params,'plot_conjID_string','');
         params = set_default_param(params,'priLastObsAge',NaN);
         params = set_default_param(params,'secLastObsAge',NaN);
-        params = set_default_param(params,'alt_ca_dist',0);
+        params = set_default_param(params,'alt_ca_dist',2);
         % Default for plotting the 3D-Nc method CA dist contour
         % 0 = Never; 1 = Only for 2D-Pc usage violations; 2 = Always when possible
         AuxCAdistContourDefault = 0; 
@@ -367,16 +371,20 @@ function [Pc,out] = PcMultiStepWithPlots(r1,v1,C1,r2,v2,C2,HBR,params)
 
         % Make the temporal plot
         if params.generate_time_plot
-            out.pcTimePlotFile = Pc_Time_Plot(PlotPars, PcMSWout);
+            pcTimeFigInfo = Pc_Time_Plot(PlotPars, PcMSWout);
+            out.pcTimePlotFile = pcTimeFigInfo.fileName;
         else
             out.pcTimePlotFile = '';
         end
 
         % Make the CA distribution plot
         if params.generate_ca_dist_plot
-            out.caDistPlotFile = CA_Dist_Plot(PlotPars, PcMSWout);
+            caDistFigInfo = CA_Dist_Plot(PlotPars, PcMSWout);
+            out.caDistPlotFile = caDistFigInfo.fileName;
+            out.uneqZoomFigParams = caDistFigInfo.uneqZoomFigParams;
         else
             out.caDistPlotFile = '';
+            out.uneqZoomFigParams = [];
         end
         
     end
@@ -400,6 +408,9 @@ end
 %                                aux CA dist contour plot
 % L. Baars       | 2025-AUG-25 | Updated code for public release. Added
 %                                figure_scale_factor parameter.
+% L. Baars       | 2025-OCT-15 | Made alt_ca_dist option 2 the default.
+%                                Added unequal zoom properties to the
+%                                output structure.
 
 % =========================================================================
 %

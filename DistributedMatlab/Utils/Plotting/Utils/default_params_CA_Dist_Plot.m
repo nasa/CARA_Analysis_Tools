@@ -30,7 +30,7 @@ function [params] = default_params_CA_Dist_Plot(params)
 %                   1 = Combined covariance placed at the origin
 %                   2 = Plane is rotated to align the axes with the
 %                       principal axes of the 2D-Pc ellipse.
-%                 Defaults to 0.
+%                 Defaults to 2.
 %
 %   AuxCAdistContour - Provides an option to turn on a beta-version
 %                      analytical visualization of the CA distribution
@@ -72,7 +72,7 @@ function [params] = default_params_CA_Dist_Plot(params)
 %
 % =========================================================================
 %
-% Initial version: Mar 2023;  Latest update: Aug 2025
+% Initial version: Mar 2023;  Latest update: Oct 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -84,7 +84,7 @@ function [params] = default_params_CA_Dist_Plot(params)
     params = set_default_param(params,'generate_ca_dist_plot',false);
     
     % Use the alternative CA distribution coordinate system
-    params = set_default_param(params,'alt_ca_dist',0);
+    params = set_default_param(params,'alt_ca_dist',2);
     if min(abs(params.alt_ca_dist-[0 1 2])) > 0
         error('Invalid alt_ca_dist parameter');
     end
@@ -116,6 +116,7 @@ end
 % D. Hall        | 2023-Nov-11 | Modified params.alt_ca_dist defaults.
 % D. Hall        | 2023-Nov-18 | Added params.AuxCAdistContour defaults.
 % L. Baars       | 2025-Aug-25 | Updated code for public release.
+% L. Baars       | 2025-Oct-15 | Made alt_ca_dist option 2 the default.
 
 % =========================================================================
 %

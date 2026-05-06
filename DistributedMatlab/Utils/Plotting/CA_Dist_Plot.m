@@ -143,15 +143,42 @@ function [figInfo] = CA_Dist_Plot(params, pcInfo)
 %
 % Output:
 %
-%   figInfo - Information pertaining to the figure generated. If
-%             params.plot_save_loc is true, then this value will contain
-%             the name of the file that was saved (including the full file
-%             path), otherwise, it will contain a reference to the figure
-%             handle for the plot that was created.
+%   figInfo - Structure containing information pertaining to the figure
+%             generated. Contains the following fields:
+%
+%       fileName - If params.plot_save_loc is a valid directory, then this
+%                  value will contain the name of the file that was saved.
+%                  Otherwise, it will be empty.
+%
+%       figHandle - If params.plot_save_loc is empty, then this value will
+%                   contain a reference to the figure handle for the plot
+%                   that was crated. Otherwise, it will be empty.
+%
+%       uneqZoomFigParams - Structure containing specific properties from
+%                           the unequal axis zoom figure. Contains the
+%                           following fields:
+%
+%           caDistFileName - If params.plot_save_loc is a valid directory,
+%                            then this value will contain the name of the
+%                            file that was saved. Otherwise, it will be
+%                            empty.
+%
+%           xlim - X-axis limits
+%
+%           ylim - Y-axis limits
+%
+%           xscale - Indicates the scale factor for the x-axis, set to 1000
+%                    for km units and 1 to m units.
+%
+%           yscale - Indicates the scale factor for the y-axis, set to 1000
+%                    for km units and 1 to m units.
+%
+%           ydir - Indicates if the y-axis direction has been reversed.
+%                  Possible values are 'normal' or 'reverse'.
 %
 % =========================================================================
 %
-% Initial version: Mar 2023;  Latest update: Aug 2025
+% Initial version: Mar 2023;  Latest update: Oct 2025
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -396,7 +423,7 @@ function [figInfo] = CA_Dist_Plot(params, pcInfo)
     fh = figure_set_up(1.5,'on');
     PlotTrialData(params, pcInfo, overallPicTrialData, 1);
     PlotTrialData(params, pcInfo, trialData, 2);
-    PlotTrialData(params, pcInfo, overallPicTrialData, 3);
+    figInfo.uneqZoomFigParams = PlotTrialData(params, pcInfo, overallPicTrialData, 3);
     
     %% Add title and notes
     subplot(2,3,2);
@@ -467,26 +494,27 @@ function [figInfo] = CA_Dist_Plot(params, pcInfo)
     text(-0.1,0.0,txt2,'FontSize',params.fig.tfsz,'FontWeight',params.fig.tfwt,'VerticalAlignment','top');
     
     %% Save the figure and close it if the figure has been saved
-    altTxt = '';
-    if params.alt_ca_dist ~= 0
-        altTxt = ['Alt' num2str(params.alt_ca_dist) ];
-    end
+    distTxt = num2str(params.alt_ca_dist);
     auxTxt = '';
     if params.AuxCAdistContour ~= 0
         auxTxt = ['Aux' num2str(params.AuxCAdistContour) ];
     end
-    [figSaved, fileName] = SaveConjFigure(fh, conjID, ['CADist' altTxt auxTxt], params);
+    [figSaved, fileName] = SaveConjFigure(fh, conjID, ['CADist' distTxt auxTxt], params);
     if figSaved
+        figInfo.fileName = fileName;
+        figInfo.uneqZoomFigParams.caDistFileName = fileName;
+        figInfo.figHandle = [];
         close(fh);
-        figInfo = fileName;
     else
-        figInfo = fh;
+        figInfo.figHandle = fh;
+        figInfo.fileName = '';
+        figInfo.uneqZoomFigParams.caDistFileName = '';
     end
 
 end
 
 % Plots actual trial data
-function PlotTrialData(params, pcInfo, trialData, plotType)
+function [figParams] = PlotTrialData(params, pcInfo, trialData, plotType)
     %% Calculate the coordinate frame
     X1 = [pcInfo.r1 pcInfo.v1]'; X2 = [pcInfo.r2 pcInfo.v2]';
     [~,X1CA,X2CA] = FindNearbyCA(X1,X2);
@@ -979,6 +1007,11 @@ function PlotTrialData(params, pcInfo, trialData, plotType)
         set(gca,'Ydir','reverse');
     end
     
+    figParams.xlim = xlim;
+    figParams.ylim = ylim;
+    figParams.xscale = Lxscl;
+    figParams.yscale = Lyscl;
+    figParams.ydir = get(gca,'Ydir');
 end
 
 %% Calculate the close approach coordinates in the CA coordinate system
@@ -1150,6 +1183,11 @@ end
 %                                contour, in addition to the 2D-Pc ellipse.
 % E. Toumey      | 2025-Mar-02 | Moved file for new directory structure.
 % L. Baars       | 2025-Aug-28 | Updated code for public release.
+% L. Baars       | 2025-Oct-15 | Always include the dist type (0, 1, 2) in
+%                                the output file name, regardless of the
+%                                alt_ca_dist setting. Adjusted the figInfo
+%                                output to provide uneqZoomFigParams
+%                                structure.
 %
 % =========================================================================
 %
