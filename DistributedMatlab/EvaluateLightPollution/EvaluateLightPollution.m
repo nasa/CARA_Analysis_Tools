@@ -794,6 +794,9 @@ if params.Evaluation.UniformDist ~= 2
         if YAxisRange(2) == 0; YAxisRange(2) = 1; end
         ylim(YAxisRange);
         xlim([0 90]); xticks([0 15 30 45 60 75 90]);
+        grid on;
+        set(gca,'GridLineStyle','-'); set(gca,'GridColor',0.6*[1 1 1]);
+        set(gca,'MinorGridLineStyle','None'); % set(gca,'MinorGridColor',mgclr);
         
         % Augment PlotTitle
         PlotTitle = titl0;
@@ -1332,7 +1335,7 @@ else
     else
         strInc = [num2str(minInc) ' to ' num2str(maxInc)];
     end
-    log_string(repfid,['Inclinations(s) of constellation shells = ' strInc ' km']);    
+    log_string(repfid,['Inclinations(s) of constellation shells = ' strInc ' deg']);    
 end
 if use_analog_satellites
     log_string(repfid,['MMT data path for' analogstr ' satellites: ' ...
@@ -1713,6 +1716,8 @@ else
         xlim([0 90]);
         xticks([0 15 30 45 60 75 90]);
         grid on;
+        set(gca,'GridLineStyle','-'); set(gca,'GridColor',0.6*[1 1 1]);
+        set(gca,'MinorGridLineStyle','None'); % set(gca,'MinorGridColor',mgclr);
         
         % Augment PlotTitle
         PlotTitle = titl0;

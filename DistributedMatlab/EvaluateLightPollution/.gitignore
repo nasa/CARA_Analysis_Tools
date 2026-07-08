@@ -1,2 +1,9 @@
+# Don't include new files in params directory
+params/
+
 # Don't include output directory
 output/
+
+# Ignore output files that haven't already been committed
+*.mat
+*.png

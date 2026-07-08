@@ -1,4 +1,4 @@
-function [sbest,sexp,salt] = smart_exp_format(x,Nsigfig,trimming)
+function [sbest,sexp,salt] = smart_exp_format(x,Nsigfig,trimming,favor_exp_format)
 
 % Generate the best number string equivalent to an exponential format,
 % which usually means the minimum length version.
@@ -30,6 +30,13 @@ elseif numel(trimming) == 1
     trimming = [trimming trimming];
 end
 
+% Favor the exponent format version for equal length strings,
+% i.e., choose 1e-2 over 0.01 and 1e1 over 10
+
+if (Nargin < 4) || isempty(favor_exp_format)
+    favor_exp_format = false;
+end
+
 % Construct exponential notation format
 
 Nsigfig = max(1,Nsigfig);
@@ -58,10 +65,18 @@ salt = strrep(num2str(x,gfmt),'E','e'); % Use lower-case e if exp format
 % notation (i.e., "0.00314159" is better than "3.14159e-3" even though
 % both have equal lengths)
 
-if length(salt) < length(sexp)
-    sbest = salt;
+if favor_exp_format
+    if length(salt) < length(sexp)
+        sbest = salt;
+    else
+        sbest = sexp;
+    end
 else
-    sbest = sexp;
+    if length(salt) <= length(sexp)
+        sbest = salt;
+    else
+        sbest = sexp;
+    end
 end
 
 return

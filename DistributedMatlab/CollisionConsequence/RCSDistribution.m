@@ -1,9 +1,11 @@
-function [RCSVec] = RCSDistribution_new(RCS_Median,NumOfSamples,SwerlingType)
+function [RCSVec] = RCSDistribution(RCS_Median,NumOfSamples,SwerlingType)
 %
 % RCSDistribution - Generates a series of RCS samples using a Swerling
 % Gamma Distribution
 %
 % Syntax:   [RCSVec] = RCSDistribution(RCS_Median,NumOfSamples,SwerlingType)
+%           [RCSVec] = RCSDistribution(RCS_Median,NumOfSamples)
+%           [RCSVec] = RCSDistribution(RCS_Median)
 %
 % Inputs:
 %   RCS             - 1X1 Median Radar Cross Section of Secondary Object (m^2)
@@ -19,11 +21,6 @@ function [RCSVec] = RCSDistribution_new(RCS_Median,NumOfSamples,SwerlingType)
 % Outputs:
 %   RCSVec          - [NumOfSamplesX1] array of sample RCS values
 %
-% Example/Validation Cases:
-%
-%    Line 1 of example
-%    Line 2 of example
-%    Line 3 of example
 %
 % Other m-files required: None
 % Subfunctions: None
@@ -33,7 +30,7 @@ function [RCSVec] = RCSDistribution_new(RCS_Median,NumOfSamples,SwerlingType)
 %           memo detailing scale factors for conversion based on Swerling
 %           Type - Author Unknown - Available through Matt Hejduk
 %
-% April 2018; Last revision: 11-Apr-2018
+% April 2018; Last revision: 29-May-2026
 %
 % ----------------- BEGIN CODE -----------------
     
@@ -60,7 +57,6 @@ function [RCSVec] = RCSDistribution_new(RCS_Median,NumOfSamples,SwerlingType)
     end
     
     % Sample RCS distribution from Swerling distribution
-%     RCSVec = gamrnd(ShapeParameter,RCS_Median*ScaleFactor/ShapeParameter,NumOfSamples,1);   % Commented out to remove dependence on Statistics Toolbox 
     u      = rand(1, NumOfSamples);
     RCSVec = RCS_Median*ScaleFactor/ShapeParameter * gammaincinv( u,  ShapeParameter )';
     RCSVec = abs(RCSVec);
@@ -75,3 +71,4 @@ function [RCSVec] = RCSDistribution_new(RCS_Median,NumOfSamples,SwerlingType)
 % ---------------------------------------------------
 % T. Lechtenberg | 04-25-2018 | Initial Development
 % R. Shepperd    | 08-11-2021 | Removed statistics tool box dependancy
+% S. Es haghi    | 05-29-2026 | Header and function name fix

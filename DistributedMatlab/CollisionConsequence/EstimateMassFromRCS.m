@@ -1,113 +1,135 @@
-function [EstimatedMass,RCS,AreaVec] = EstimateMassFromRCS(RCS,CdVec,B,SwerlingType)
+function [EstimatedMass,RCS,AreaVec] = ...
+        EstimateMassFromRCS(RCS,CdVec,BVec,SwerlingType,Frequency,NumOfSamples,Ln_MassCalFac_Mean,Ln_MassCalFac_Sigma)
 %
-% EstimateMassFromRCS - Estimates Mass from an input satellite's RCS and
-% Ballistic Coefficient
+% EstimateMassFromRCS - Estimates Mass from an input satellite's RCS , 
+%                       Ballistic Coefficient and Drag Coefficients
+%                       (The code can also work if instead of Drag
+%                       coefficients and ballistic coefficients,
+%                       Reflectivity coefficient and SRP
+%                       coefficients are provided)
 %
-% Syntax:   [EstimatedMass] = EstimateMassFromRCS(RCS,B)
+% Syntax:   
+% 
+% [EstimatedMass,RCS,AreaVec] = EstimateMassFromRCS(RCS,CdVec,BVec)
+% [EstimatedMass,RCS,AreaVec] = EstimateMassFromRCS(RCS,CdVec,BVec,SwerlingType)
+% [EstimatedMass,RCS,AreaVec] = EstimateMassFromRCS(RCS,CdVec,BVec,SwerlingType,Frequency)
+% [EstimatedMass,RCS,AreaVec] = EstimateMassFromRCS(RCS,CdVec,BVec,SwerlingType,Frequency,NumOfSamples)
+% [EstimatedMass,RCS,AreaVec] = EstimateMassFromRCS(RCS,CdVec,BVec,SwerlingType,Frequency,NumOfSamples,Ln_MassCalFac_Mean,Ln_MassCalFac_Sigma)
 %
 % Inputs:
-%   RCS             - NX1 Radar Cross Section of Object (m^2)
-%   Cd              - NX1 Coefficient of Drag of the object (dimensionless)
-%   B               - NX1 Ballistic Coefficient of Object (m^2/kg)
+%   RCS             - NX1 or 1X1 Radar Cross Section of Object (m^2)
+%   CdVec           - NX1 or 1X1 or 1X2 Coefficient of Drag of the object (dimensionless)
+%                     (if a 2 element vector is provided, the first element
+%                     will be taken as coefficient mean and the second
+%                     element will be taken as coefficient variance and a
+%                     normal distribution will be generated)
+%   BVec            - NX1 or 1X1 or 1X2 Ballistic Coefficient of Object (m^2/kg)
+%                     (if a 2 element vector is provided, the first element
+%                     will be taken as coefficient mean and the second
+%                     element will be taken as coefficient variance and a
+%                     normal distribution will be generated)
 %   SwerlingType    - Text input of Swerling distribution type (optional, Default = 'III')
 %                     Allowable Inputs:
 %                       * 'I'
 %                       * 'II'
 %                       * 'III'
 %                       * 'IV'
+%   Frequency       - 1X1 Frequency of the sensor at which RCS have been
+%                     obtained (MHz) (optional, Default = 2000 MHz)
+%   NumOfSamples    - 1X1 Number of RCS samples to be generated if only the
+%                     median RCS is provided. If Cd and B are also provided
+%                     as 1X2 vectors where the first element is the mean
+%                     and the second element is the standard deviation,
+%                     this will be used to generate normally distributed
+%                     vectors for each of them. If the provided RCS is
+%                     a Nx1 or the Cd and B vectors are provided as NX1
+%                     vectors, number of RCS samples will be set to N
+%                     (optional, Default = 1E5)
+%
+%   Ln_MassCalFac_Mean - 1X1 The mean log-normal mass calibration factor to
+%                        scale the calculated masses (optional, Default = 0)
+%   Ln_MassCalFac_Sigma- 1X1 The std log-normal mass calibration factor to
+%                        scale the calculated masses (optional, Default = 0)
+%                        
+%   
 %
 % Outputs:
-%   EstimatedMass   - NX1 Estimated Mass of input object
+%   EstimatedMass   - NX1 Estimated Mass sample vector of input object
+%   RCS             - NX1 RCS Samples vector used to generate the mass
+%                     samples
+%   AreaVec         - NX1 Estimated frontal area vector assuming a spherical 
+%                     cross section
 %
-% Example/Validation Cases:
-%
-%    Line 1 of example
-%    Line 2 of example
-%    Line 3 of example
 %
 % Other m-files required: 	RCSDistribution.m
+%                           NASA_SEM_RCSToSizeVec.m
 % Subfunctions: None
 % MAT-files required: None
 %
 % See also: none
 %
-% April 2018; Last revision: 11-Apr-2018
+% April 2018; Last revision: 01-Jun-2026
 %
 % ----------------- BEGIN CODE -----------------
     
+    
     % Set Default inputs
-    Frequency               = 2000; % Default radar frequency used for estimating object size
-    ObservabilityThreshold  = 0.05; % Observability threshold below which objects can not be tracked
-    IterationLimit          = 100;  % Limit the number of times program may iterate to ensure Observability constraints are satisfied
-    % Default Swerling Type
-    if nargin < 4 || isempty(SwerlingType)
+    if nargin <3
+        error('Insufficient number of inputs')
+    elseif nargin == 3
+        SwerlingType = [];
+        Frequency    = 2000; % Default radar frequency used for estimating object size
+        NumOfSamples = 1e5;
+        Ln_MassCalFac_Mean = 0;
+        Ln_MassCalFac_Sigma = 0;
+    elseif nargin == 4
+        Frequency    = 2000; % Default radar frequency used for estimating object size
+        NumOfSamples = 1e5;
+        Ln_MassCalFac_Mean = 0;
+        Ln_MassCalFac_Sigma = 0;
+    elseif nargin == 5
+        NumOfSamples = 1e5;
+        Ln_MassCalFac_Mean = 0;
+        Ln_MassCalFac_Sigma = 0;
+    elseif nargin == 6
+        Ln_MassCalFac_Mean = 0;
+        Ln_MassCalFac_Sigma = 0;
+    end
+
+    if isempty(SwerlingType)
         SwerlingType = 'III';
     end
-    
-    % Determine median RCS if not a singular quantity
-    MedianRCS               = median(RCS);
+
+    % Set Number of samples based on other vectors
+    if size(CdVec,1) ~= 1 && size(BVec,1) == size(CdVec,1)
+        NumOfSamples = size(CdVec,1);
+    end
+
+    % Calculate RCS samples if only one RCS given
+    if length(RCS)==1
+        RCS = RCSDistribution(RCS,NumOfSamples,SwerlingType);
+    end
+
+    % Calculate Cd samples if Standard deviation provided
+    if size(CdVec,1)==1 && size(CdVec,2)==2
+        Cd = CdVec(1); CdVar = CdVec(2);
+        CdVec=abs(Cd+sqrt(CdVar)*randn(NumOfSamples,1)); 
+    end
+
+    % Calculate BC samples if Standard deviation provided
+    if size(BVec,1)==1 && size(BVec,2)==2
+        B = BVec(1); BVar = BVec(2);
+        BVec=abs(B+sqrt(BVar)*randn(NumOfSamples,1));
+    end
     
     % Set Speed of light
     c = 299792458; % m/s
-    
-    % Attempt to load Radar frequency ranges and RCS thresholds (Numbers
-    % previously included in analysis are not for public distribution) and
-    % use a default value otherwise
-    try
-        p = mfilename('fullpath');
-        [filepath,~,~] = fileparts(p);
-        radarFreqFile = fullfile(filepath, ...
-            '../../NonDistData/RadarFrequencies_NonDistributable.mat');
-        if exist(radarFreqFile,'file')
-            load(radarFreqFile,'Frequencies','LowRCSThresholds');
-            Frequency = zeros(length(RCS),1);
-            for i=1:length(RCS)
-                idx = find(LowRCSThresholds < RCS(i),1,'last');
-                Frequency(i) = Frequencies(idx);
-            end
-            clear idx
-        else
-            warning('No file available to load Radar Frequencies and associated size cutoffs from, defaults used');
-        end
-    catch
-        warning('No file available to load Radar Frequencies and associated size cutoffs from, defaults used');
-    end
     
     % radar wavelength in m (associated with RCS frequency); wave equation below
     lambda = c./(Frequency*1e6); 
     
     % Converts RCS value to normalized size value, using the ODPO size estimation model
     x = NASA_SEM_RCSToSizeVec(RCS./lambda.^2);
-    
-    % Store Original Outputs
-    xOld    = x;
-    RCSOld  = RCS;
-    
-%     % restrict object size to less than observability threshold by looping
-%     % through iterations
-%     Count = 0;
-%     while ~isempty(find(x.*lambda<=ObservabilityThreshold,1)) && Count < IterationLimit
-%         idx = find(x.*lambda<=ObservabilityThreshold);
-%         [RCS(idx)] = RCSDistribution(MedianRCS,length(idx),SwerlingType);
-%         for i=1:length(idx)
-%             index = find(LowRCSThresholds < RCS(idx(i)),1,'last');
-%             Frequency(idx(i)) = Frequencies(index);
-%         end
-%         clear index
-%         lambda = c./(Frequency*1e6); 
-%         x(idx)=NASA_SEM_RCSToSizeVec(RCS(idx)./lambda(idx).^2);
-%         Count = Count+1;
-%     end
-%     
-%     % Use original distribution of values if observability threshold could
-%     % not be achieved
-%     if Count == IterationLimit
-%         warning(['Failed to restrict output object sizes from RCS vectors to less than: '...
-%                  num2str(ObservabilityThreshold,'%.3f') ' meters after ' num2str(IterationLimit,'%d')...
-%                  ' Iterations.  Output values do not comply with this limit and may not be strictly reasonable']);
-%         x   = xOld;
-%         RCS = RCSOld;
-%     end
     
     % Un-normalize the size of the object (meters)
     Size=x.*lambda;
@@ -117,7 +139,12 @@ function [EstimatedMass,RCS,AreaVec] = EstimateMassFromRCS(RCS,CdVec,B,SwerlingT
     AreaVec=pi*(Size./2).^2;
     
     % vector of satellite mass estimates (from ballistic coefficient equation)
-    EstimatedMass = CdVec.*AreaVec./B;
+    EstimatedMass = CdVec.*AreaVec./BVec;
+
+    % Scale the estimated masses using the provided calibration factor
+    gsamp = Ln_MassCalFac_Mean + Ln_MassCalFac_Sigma*randn(NumOfSamples,1);
+    LinMassCalFac = exp(gsamp);
+    EstimatedMass = LinMassCalFac .* EstimatedMass;
     
 
 % ----------------- END OF CODE ------------------
@@ -129,4 +156,7 @@ function [EstimatedMass,RCS,AreaVec] = EstimateMassFromRCS(RCS,CdVec,B,SwerlingT
 % Developer      |    Date    |     Description
 % ---------------------------------------------------
 % T. Lechtenberg | 04-11-2018 | Initial Development
-%
+% S. Es haghi    | 06-01-2026 | Clean out commented segments and add
+%                               capability to take sensor frequency and
+%                               log-normal mass calibration factors as
+%                               input

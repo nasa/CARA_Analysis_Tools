@@ -72,6 +72,8 @@ function [cdmhead, cdmobj, status] = read_cdm(filename, ignoreExtraFields, ignor
 % L. Baars      02/14/2024  Added support for EFFECTIVE_HBR comment field.
 % S. Es haghi   01/14/2025  Modified to read CDMs with a hidden
 %                           initial character in their CCSDS keyword token
+% D. Hall       06/17/2026  Added some robustness for hidden initial
+%                           character search in CCSDS keyword token
 
 persistent pathsAdded
 if isempty(pathsAdded)
@@ -399,7 +401,12 @@ headStartIdx = 0;
 while ~strcmp(keyword,word) && headStartIdx < numel(data)
     headStartIdx = headStartIdx + 1;
     [keyword, value] = get_keyword_value(data{headStartIdx});
-    if length(keyword) == 15; keyword = keyword(2:end); end % Deletes the hidden character in special case CDMs
+    if headStartIdx == 1
+        k = strfind(keyword,word);
+        if k > 0
+            keyword = keyword(k:end);
+        end
+    end
 end
 % Check if the CCSDS keyword was found
 if ~strcmp(keyword,word)
