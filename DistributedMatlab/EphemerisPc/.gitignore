@@ -1,0 +1,11 @@
+# Ignore following directories
+BFMCruns/
+
+# Ignore copied files
+*Copy*.m
+
+# Ignore output files
+*.png
+*.jpg
+*.mp4
+*.log

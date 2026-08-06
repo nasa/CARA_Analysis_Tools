@@ -7,7 +7,7 @@ function [Pc,out] = PcMultiStep(r1,v1,C1,r2,v2,C2,HBR,params)
 %
 % =========================================================================
 %
-% Copyright (c) 2023-2025 United States Government as represented by the
+% Copyright (c) 2023-2026 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -198,7 +198,7 @@ function [Pc,out] = PcMultiStep(r1,v1,C1,r2,v2,C2,HBR,params)
 %        Defaults to 0.75.
 %
 %      Nc3DInaccurateCutoff =
-%        Pair of threshold values for 3D-Nc "inaccurate" usage violtions.
+%        Pair of threshold values for 3D-Nc "inaccurate" usage violations.
 %        The first value checks if the average number of Lebedev quadrature
 %        points used for the unit-sphere collision rate integrations was
 %        too small, indicating sharply peaked unit-sphere integrand
@@ -222,6 +222,10 @@ function [Pc,out] = PcMultiStep(r1,v1,C1,r2,v2,C2,HBR,params)
 %          1 => Check for zeros in vel-vel diagonal elements
 %          2 => Also check for zeros in pos-vel elements
 %        Defaults to 2.
+%
+%      IncludeUc =
+%        Boolean which indicates the Uc (Upper probability or credibility
+%        of collision) calculations should be performed.
 %
 % =========================================================================
 %
@@ -512,6 +516,18 @@ function [Pc,out] = PcMultiStep(r1,v1,C1,r2,v2,C2,HBR,params)
 %      NeedNc3DCalculation - Boolean which is set to true if the 3D-Nc
 %                            calculation was computed.
 %
+%      Uc2Dstep1 - Computed Uc (Upper probability or credibility of
+%                  collision) using Uc2D_Credibility, including covariance
+%                  cross correction if appropriate.
+%
+%      Uc2D2step2 - Computed Uc value using Uc2D_Credibility, but with
+%                   corrected inputs to account for the shift in ellipse
+%                   center (analogous to Nc2D).
+%
+%      Uc3D - Computed Uc value using Uc3_Credibility.
+%
+%      UcBest - Recommended Uc value to use for this conjunction.
+%
 % =========================================================================
 %
 % References:
@@ -552,7 +568,7 @@ function [Pc,out] = PcMultiStep(r1,v1,C1,r2,v2,C2,HBR,params)
 %
 % =========================================================================
 %
-% Initial version: Feb 2023;  Latest update: Oct 2025
+% Initial version: Feb 2023;  Latest update: Jun 2026
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -564,6 +580,7 @@ if isempty(pathsAdded)
     s = what(fullfile(p, 'Utils')); addpath(s.path);
     s = what(fullfile(p, '../Utils/AugmentedMath')); addpath(s.path);
     s = what(fullfile(p, '../Utils/OrbitTransformations')); addpath(s.path);
+    s = what(fullfile(p, '../CredibilityOfCollision')); addpath(s.path);
     pathsAdded = true;
 end
 
@@ -578,6 +595,7 @@ params = set_default_param(params,'InputPc2DValue',[]);
 params = set_default_param(params,'Nc2DParams',[]);
 params = set_default_param(params,'Nc3DParams',[]);
 params = set_default_param(params,'Pc_tiny',1e-300);
+params = set_default_param(params,'IncludeUc',false);
 
 % Flags to force Pc calculations using the 2D-Pc, 2D-Nc and 3D-Nc methods
 params = set_default_param(params,'ForcePc2DCalculation',false);
@@ -685,6 +703,10 @@ out.Nc3D = NaN;
 out.PcMethod = 'None';
 out.PcMethodNum = NaN;
 out.PcMethodMax = NaN;
+out.Uc2Dstep1 = NaN;
+out.Uc2Dstep2 = NaN;
+out.Uc3D = NaN;
+out.UcBest = NaN;
 
 % Populate default values for ConjData info in the out structure
 out.IsRemediated       = [];
@@ -798,7 +820,7 @@ end
 out.DataQualityError.invalidCov3x3 = out.DataQualityError.invalidCov3x3Pri || ...
     out.DataQualityError.invalidCov3x3Sec;
 
-% Check if any data quality errors occured
+% Check if any data quality errors occurred
 out.AnyDataQualityErrorsPri = out.DataQualityError.defaultCovPri || ...
                               out.DataQualityError.invalidCovPri || ...
                               out.DataQualityError.invalidCov3x3Pri;
@@ -868,11 +890,33 @@ else
         % Calculate the conjunction plane 2D-Pc value
         [out.Pc2D,tempOut] = ...
             PcCircleWithConjData(r1CA,v1CA,Arel,r2CA,v2CA,zeros(size(Arel)),HBR);
+
+        % Calculate the corresponding Uc2D
+        if params.IncludeUc
+            % Create temporary params to avoid calling PcMultiStep within Uc2D
+            Uc2D_temp_params.PcMSOutput.Pc2DInfo.xmiss      = tempOut.xm;
+            Uc2D_temp_params.PcMSOutput.Pc2DInfo.ymiss      = tempOut.zm;
+            Uc2D_temp_params.PcMSOutput.Pc2DInfo.xsigma     = tempOut.sx;
+            Uc2D_temp_params.PcMSOutput.Pc2DInfo.ysigma     = tempOut.sz;
+            [out.Uc2Dstep1,~] = Uc2D_Credibility(r1CA,v1CA,Arel,r2CA,v2CA,zeros(size(Arel)),HBR,Uc2D_temp_params);
+        end
+
     else
         out.covXcorr_corrections_applied = false;
         % Calculate the conjunction plane 2D-Pc value
         [out.Pc2D,tempOut] = ...
             PcCircleWithConjData(r1CA,v1CA,C1(1:3,1:3),r2CA,v2CA,C2(1:3,1:3),HBR);
+
+        % Calculate the corresponding Uc2D
+        if params.IncludeUc
+            % Create temporary params to avoid calling PcMultiStep within Uc2D
+            Uc2D_temp_params.PcMSOutput.Pc2DInfo.xmiss      = tempOut.xm;
+            Uc2D_temp_params.PcMSOutput.Pc2DInfo.ymiss      = tempOut.zm;
+            Uc2D_temp_params.PcMSOutput.Pc2DInfo.xsigma     = tempOut.sx;
+            Uc2D_temp_params.PcMSOutput.Pc2DInfo.ysigma     = tempOut.sz;
+            [out.Uc2Dstep1,~] = Uc2D_Credibility(r1CA,v1CA,C1(1:3,1:3),r2CA,v2CA,C2(1:3,1:3),HBR,Uc2D_temp_params);
+        end
+
     end
     out.Pc2DInfo.Method = '2D-Pc';
     out.Pc2DInfo.Arel = Arel;
@@ -900,7 +944,7 @@ else
         out.Pc2DInfo.EigL2Sec = tempOut.EigL2Sec;
     end
     
-    % Populate ConjData info inthe the out structure
+    % Populate ConjData info in the the out structure
     out.IsRemediated       = tempOut.IsRemediated;
     out.IsPosDef           = tempOut.IsPosDef;
     out.SemiMajorAxis      = tempOut.SemiMajorAxis;
@@ -925,6 +969,7 @@ if ~isnan(out.Pc2D)
     Pc = out.Pc2D;
     out.PcMethod = out.Pc2DInfo.Method;
     out.PcMethodNum = 1; % Indicates 2D-Pc has been adopted
+    out.UcBest = out.Uc2Dstep1; % Update best Uc value
 end
 
 if params.OnlyPc2DCalculation
@@ -1182,6 +1227,21 @@ if NeedNc2DCalculation
     
     % Calculate the 2D-Nc collision probability
     [out.Nc2D, out.Nc2DInfo] = Pc2D_Hall(r1,v1,C1,r2,v2,C2,HBR,Nc2DParams);
+
+    % Calculate the corresponding Uc2D (including shifted miss vector)
+    if params.IncludeUc
+        % create shifted values to mirror Nc2D calculation
+        z1x3     = zeros(1,3); %object at origin
+        rCAeff   = out.Nc2DInfo.rCAeff; %effective miss vector
+        vCAeff   = out.Nc2DInfo.vCAeff; %effective velocity
+        covCAeff = out.Nc2DInfo.covCAeff; % effective miss-vector covariance
+        % Create temporary params to avoid calling PcMultiStep within Uc2D
+        Uc2D_temp_params.PcMSOutput.Pc2DInfo.xmiss   = out.Nc2DInfo.PcCPInfo.xm; 
+        Uc2D_temp_params.PcMSOutput.Pc2DInfo.ymiss   = out.Nc2DInfo.PcCPInfo.zm;
+        Uc2D_temp_params.PcMSOutput.Pc2DInfo.xsigma  = out.Nc2DInfo.PcCPInfo.sx;
+        Uc2D_temp_params.PcMSOutput.Pc2DInfo.ysigma  = out.Nc2DInfo.PcCPInfo.sz;
+        [out.Uc2Dstep2,~] = Uc2D_Credibility(z1x3,z1x3,zeros(3,3),rCAeff',vCAeff',covCAeff,HBR,Uc2D_temp_params);
+    end
     
     % Process Nc2D method usage violations
     if isnan(out.Nc2D)
@@ -1228,7 +1288,7 @@ if NeedNc2DCalculation
         Tab = max(abs([Ta Tb]));
         out.Nc2DInfo.Indicators.Offset = Tab / PeriodMin;   
         
-        % Potentical inaccuracy indicator based on difference between
+        % Potential inaccuracy indicator based on difference between
         % best estimate and alternate method 2D-Nc estimates
         PcBest = out.Nc2D;
         PcAlt = out.Nc2DInfo.PcAlt;
@@ -1268,6 +1328,7 @@ if NeedNc2DCalculation
     % Update the reported Pc value
     if out.Nc2DInfo.Converged
         Pc = out.Nc2D;
+        out.UcBest = out.Uc2Dstep2; % Update best Uc value
         if out.Nc2DInfo.Pcmethod == 2
             % 2D-Nc using default-accuracy Lebedev quadrature unit-sphere
             % integration (most frequent)
@@ -1289,6 +1350,7 @@ if NeedNc2DCalculation
     end
     
 end
+
 
 %% Perform 3D-Nc processing
 
@@ -1427,12 +1489,12 @@ if NeedNc3DCalculation
                 out.Nc3DInfo.Indicators.Inaccurate > ...
                 params.Nc3DInaccurateCutoff(1);
             % If not already determined, check again if the 2D-Nc 
-            % estimate provides a better appproximation,
+            % estimate provides a better approximation,
             % typically for the large-HBR/small-cov. limiting case
             if out.Nc3DInfo.Violations.Inaccurate && ...
                 ~Use2DNcForLargeHBREstimate  && ...
                 out.PcMethodNum >= 2
-                % Potentical inaccuracy indicator based on difference 
+                % Potential inaccuracy indicator based on difference 
                 % between best 2D-Nc estimate and conj. plane 2D-Nc
                 % approximation
                 Nc2DBest = out.Nc2D;
@@ -1460,7 +1522,7 @@ if NeedNc3DCalculation
             end
         end
         
-        % Check if any violations occured
+        % Check if any violations occurred
         out.AnyNc3DViolations = out.Nc3DInfo.Violations.Extended | ...
                                 out.Nc3DInfo.Violations.Offset   | ...
                                 out.Nc3DInfo.Violations.Inaccurate;
@@ -1471,8 +1533,8 @@ if NeedNc3DCalculation
     if Use2DNcForLargeHBREstimate > 0
         % Substitute 2D-Nc large-HBR/small-cov. limit estimate, if required
         % Typically, this branch is used relatively infrequently.
-        out.Nc3D = out.Nc2D; Pc = out.Nc2D;
-        out.PcMethodNum = out.PcMethodMax; % Indicates 2D-Nc overides 3D-Nc
+        out.Nc3D = out.Nc2D; Pc = out.Nc2D; out.UcBest = out.Uc2Dstep2;
+        out.PcMethodNum = out.PcMethodMax; % Indicates 2D-Nc overrides 3D-Nc
         out.PcMethod = '3D-Nc-ConjPlane (conj. plane integration approx.)';
         out.Nc3DInfo.Use2DNcForLargeHBREstimate = Use2DNcForLargeHBREstimate;
         % Use 2D-Nc method inaccuracy usage violation indicators
@@ -1488,6 +1550,22 @@ if NeedNc3DCalculation
         Pc = out.Nc3D;
         out.PcMethod = ['3D-Nc' Nc3DSegmentString];
         out.PcMethodNum = out.PcMethodMax; % Indicates 3D-Nc has been adopted
+
+        % Calculate the corresponding Uc3D (Only works if
+        % Nc3DInfo.Converged has been generated and true)
+        if params.IncludeUc
+            % Create temporary params to avoid calling PcMultiStep within Uc2D
+            Uc3D_temp_params.PcMSOutput.Nc3DInfo.Converged     = out.Nc3DInfo.Converged;
+            Uc3D_temp_params.PcMSOutput.Nc3DInfo.HBR           = out.Nc3DInfo.HBR;
+            Uc3D_temp_params.PcMSOutput.Nc3DInfo.Teph          = out.Nc3DInfo.Teph;
+            Uc3D_temp_params.PcMSOutput.Nc3DInfo.xu            = out.Nc3DInfo.xu;
+            Uc3D_temp_params.PcMSOutput.Nc3DInfo.Ps            = out.Nc3DInfo.Ps;
+            Uc3D_temp_params.PcMSOutput.Nc3DInfo.POPconv       = out.Nc3DInfo.POPconv;
+            Uc3D_temp_params.PcMSOutput.Nc3DInfo.params.Fclip  = out.Nc3DInfo.params.Fclip;
+            [out.Uc3D,~] = Uc3D_Credibility(r1,v1,C1,r2,v2,C2,HBR,Uc3D_temp_params);
+        end
+
+        out.UcBest = out.Uc3D; % Update best Uc value
     end
 
 end
@@ -1499,6 +1577,7 @@ if ~isnan(Pc) && Pc <= params.Pc_tiny
 end
 
 return
+
 end
 
 % ----------------- END OF CODE ------------------
@@ -1544,10 +1623,10 @@ end
 %                                Pc-2D usage violations fail to converge.
 % L. Baars       | 2025-OCT-06 | Enhanced error messages for data quality
 %                                errors.
-
+% D. Reynolds    | 2026-JUN-17 | Included the ability to calculate Uc.
 % =========================================================================
 %
-% Copyright (c) 2023-2025 United States Government as represented by the
+% Copyright (c) 2023-2026 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
