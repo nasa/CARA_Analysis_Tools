@@ -7,7 +7,7 @@ function [Pc, out] = PcCircleWithConjData(r1,v1,cov1,r2,v2,cov2,HBR,params)
 %
 % =========================================================================
 %
-% Copyright (c) 2023-2025 United States Government as represented by the
+% Copyright (c) 2023-2026 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -165,7 +165,7 @@ function [Pc, out] = PcCircleWithConjData(r1,v1,cov1,r2,v2,cov2,HBR,params)
 %
 % =========================================================================
 %
-% Initial version: Dec 2023;  Latest update: Aug 2025
+% Initial version: Dec 2023;  Latest update: Oct 2026
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -230,9 +230,9 @@ function [Pc, out] = PcCircleWithConjData(r1,v1,cov1,r2,v2,cov2,HBR,params)
     eci2ricPrim = [Rhat Ihat Chat];
     % Project the combined covariance in the RIC primary frame
     CovCombRICPrim = Product3x3(eci2ricPrim,Product3x3(CombCov(:,1:1:9),eci2ricPrim(:,[1 4 7 2 5 8 3 6 9])));
-    out.RadialSigma = sqrt(CovCombRICPrim(:,1)) .* 1000;
-    out.InTrackSigma = sqrt(CovCombRICPrim(:,5)) .* 1000;
-    out.CrossTrackSigma = sqrt(CovCombRICPrim(:,9)) .* 1000;
+    out.RadialSigma = sqrt(CovCombRICPrim(:,1));
+    out.InTrackSigma = sqrt(CovCombRICPrim(:,5));
+    out.CrossTrackSigma = sqrt(CovCombRICPrim(:,9));
     
     % Relative phase angle (in degrees)
     norm_v1 = sqrt(v1(:,1).^2 + v1(:,2).^2 + v1(:,3).^2);
@@ -302,12 +302,15 @@ end
 % ----------------- CHANGE HISTORY ----------------------------------------
 % Developer      |    Date    |     Description
 % -------------------------------------------------------------------------
-% L. Baars       | 12-12-2023 |  Initial version
-% L. Baars       | 08-21-2025 |  Added disclaimer and updated documentation
+% L. Baars       | 12-12-2023 | Initial version
+% L. Baars       | 08-21-2025 | Added disclaimer and updated documentation
+% L. Baars       | 10-29-2026 | Removed units adjustments for the RIC sigma
+%                               values so that the sigmas always match the
+%                               input units.
 
 % =========================================================================
 %
-% Copyright (c) 2023-2025 United States Government as represented by the
+% Copyright (c) 2023-2026 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %

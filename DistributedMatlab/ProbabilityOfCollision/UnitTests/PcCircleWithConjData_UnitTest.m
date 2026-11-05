@@ -11,7 +11,7 @@ classdef (SharedTestFixtures = { ...
 %
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2026 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
@@ -23,7 +23,7 @@ classdef (SharedTestFixtures = { ...
 %
 % =========================================================================
 %
-% Initial version: Dec 2023;  Latest update: Dec 2023
+% Initial version: Dec 2023;  Latest update: Oct 2026
 %
 % ----------------- BEGIN CODE -----------------
 
@@ -47,9 +47,9 @@ classdef (SharedTestFixtures = { ...
         outHBR = {[10; 10]};
         outMissDistance = {[19168.4020642769; 19168.4020642769]};
         outx1Sigma = {[0.00503717210711541; 2753.92453514032]};
-        outRadialSigma = {[6897817.0037583; 1033485.46179984]};
-        outInTrackSigma = {[38217015.3423524; 52748084.4916239]};
-        outCrossTrackSigma = {[139862333.73159; 140047402.670176]};
+        outRadialSigma = {[6897.8170037583; 1033.48546179984]};
+        outInTrackSigma = {[38217.0153423524; 52748.0844916239]};
+        outCrossTrackSigma = {[139862.33373159; 140047.402670176]};
         outConditionNumPrimary = {[7790.99912705967; 7790.99912705967]};
         outConditionNumSecondary = {[34369361.251137; 68183662.8273948]};
         outConditionNumCombined = {[210715.946879989; 64424477.1230422]};
@@ -144,10 +144,12 @@ end
 % Developer      |    Date    |     Description
 %--------------------------------------------------------------------------
 % L. Baars       | 12-27-2023 | Initial development
+% L. Baars       | 10-29-2026 | Fixed sigma values to match the fix made
+%                               within PcCircleWithConjData.m.
 
 % =========================================================================
 %
-% Copyright (c) 2023 United States Government as represented by the
+% Copyright (c) 2023-2026 United States Government as represented by the
 % Administrator of the National Aeronautics and Space Administration.
 % All Rights Reserved.
 %
